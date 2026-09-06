@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Header.css';
 
-export default function Header() {
+export default function Header({ onLogoClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -13,7 +13,7 @@ export default function Header() {
       <div className="header-container">
         {/* Lado Esquerdo: Logo, Divisor e Navegação */}
         <div className="header-left">
-          <a href="#" className="header-logo-badge" aria-label="Logo">
+          <a href="#" onClick={(e) => { e.preventDefault(); onLogoClick?.(); }} className="header-logo-badge" aria-label="Logo">
             <svg
               className="logo-star-icon"
               viewBox="0 0 24 24"
@@ -30,7 +30,7 @@ export default function Header() {
           <nav className={`header-nav ${isMenuOpen ? 'is-open' : ''}`} aria-label="Navegação Principal">
             <ul className="nav-list">
               <li className="nav-item">
-                <a href="#home" className="nav-link">Home</a>
+                <a href="#home" onClick={(e) => { e.preventDefault(); onLogoClick?.(); }} className="nav-link">Home</a>
               </li>
               <li className="nav-item">
                 <a href="#empresa" className="nav-link">Sou Empresa</a>

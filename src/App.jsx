@@ -1,8 +1,22 @@
+import { useState } from 'react'
 import Header from './Components/Header/Header'
 import Footer from './Components/Footer/Footer'
+import AdminForm from './Components/AdminForm/AdminForm'
 import './App.css'
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('home')
+
+  if (currentPage === 'admin') {
+    return (
+      <div className="app-container">
+        <Header onLogoClick={() => setCurrentPage('home')} />
+        <AdminForm />
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="app-container">
       <Header />
@@ -16,7 +30,7 @@ function App() {
 
           <div className="portal-buttons-grid">
             {/* 1. Página do Administrador */}
-            <a href="#admin" className="portal-btn">
+            <button onClick={() => setCurrentPage('admin')} className="portal-btn">
               <div className="portal-btn-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -26,7 +40,7 @@ function App() {
                 <span className="portal-btn-name">Administrador</span>
                 <span className="portal-btn-desc">Painel de gestão e controle</span>
               </div>
-            </a>
+            </button>
 
             {/* 2. Página da Corporação */}
             <a href="#corporacao" className="portal-btn">
