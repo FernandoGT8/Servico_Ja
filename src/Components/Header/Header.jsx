@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Header.css';
 
-export default function Header({ onLogoClick }) {
+export default function Header({ onLogoClick, onLoginClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -50,7 +50,7 @@ export default function Header({ onLogoClick }) {
 
         {/* Lado Direito: Login e Botão Mobile */}
         <div className="header-right">
-          <a href="#login" className="login-button">
+          <a href="#login" onClick={(e) => { e.preventDefault(); onLoginClick?.(); }} className="login-button">
             <svg
               className="login-icon"
               viewBox="0 0 24 24"
