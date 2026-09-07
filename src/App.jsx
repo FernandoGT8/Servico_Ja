@@ -1,16 +1,44 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './Components/Header/Header'
 import Footer from './Components/Footer/Footer'
 import AdminForm from './Components/AdminForm/AdminForm'
+import Login from './Components/Login/Login'
+import SignUp from './Components/SignUp/SignUp'
 import './App.css'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home')
+  const [currentPage, setCurrentPage] = useState(() => {
+    return localStorage.getItem('currentPage') || 'home'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage)
+  }, [currentPage])
+
+  if (currentPage === 'login') {
+    return (
+      <div className="app-container">
+        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
+        <Login onLoginSuccess={() => setCurrentPage('home')} onSignUpClick={() => setCurrentPage('signup')} />
+        <Footer />
+      </div>
+    )
+  }
+
+  if (currentPage === 'signup') {
+    return (
+      <div className="app-container">
+        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
+        <SignUp />
+        <Footer />
+      </div>
+    )
+  }
 
   if (currentPage === 'admin') {
     return (
       <div className="app-container">
-        <Header onLogoClick={() => setCurrentPage('home')} />
+        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
         <AdminForm />
         <Footer />
       </div>
@@ -19,8 +47,8 @@ function App() {
 
   return (
     <div className="app-container">
-      <Header />
-      
+      <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
+
       <main className="main-content">
         <section className="portal-section">
           <div className="portal-header">
