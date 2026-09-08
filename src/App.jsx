@@ -4,22 +4,36 @@ import Footer from './Components/Footer/Footer'
 import AdminForm from './Components/AdminForm/AdminForm'
 import Login from './Components/Login/Login'
 import SignUp from './Components/SignUp/SignUp'
+import Dashboard from './Components/Dashboard/Dashboard'
 import './App.css'
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     return localStorage.getItem('currentPage') || 'home'
   })
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return !!localStorage.getItem('token')
+  })
 
   useEffect(() => {
     localStorage.setItem('currentPage', currentPage)
   }, [currentPage])
 
+  if (isLoggedIn) {
+    return <Dashboard onLogout={() => {
+      setIsLoggedIn(false)
+      setCurrentPage('home')
+    }} />
+  }
+
   if (currentPage === 'login') {
     return (
       <div className="app-container">
         <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
-        <Login onLoginSuccess={() => setCurrentPage('home')} onSignUpClick={() => setCurrentPage('signup')} />
+        <Login onLoginSuccess={() => {
+          setIsLoggedIn(true)
+          setCurrentPage('dashboard')
+        }} onSignUpClick={() => setCurrentPage('signup')} />
         <Footer />
       </div>
     )

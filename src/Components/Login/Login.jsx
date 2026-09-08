@@ -5,12 +5,44 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    // TODO: Integrar com backend para validação real
-    if (email && password) {
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('http://localhost:8080/api/usuarios/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          senha: password
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.mensagem || 'Email ou senha inválidos')
+        setLoading(false)
+        return
+      }
+
+      const data = await response.json()
+
+      // Armazenar token no localStorage
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data))
+
+      setLoading(false)
       onLoginSuccess()
+    } catch (err) {
+      setError('Erro ao conectar com o servidor. Tente novamente.')
+      setLoading(false)
     }
   }
 
@@ -54,6 +86,8 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
         </div>
 
         <form onSubmit={handleLogin} className="login-form">
+          {error && <div style={{ color: '#dc3545', fontSize: '14px', marginBottom: '16px', padding: '8px', backgroundColor: '#f8d7da', borderRadius: '4px' }}>{error}</div>}
+
           <div className="form-field">
             <label>E-mail ou CPF/CNPJ</label>
             <input
@@ -62,6 +96,7 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
               placeholder="Digite seu email, CPF ou CNPJ"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
               required
             />
           </div>
@@ -75,6 +110,7 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
                 placeholder="Digite sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
                 required
               />
               <button
@@ -82,6 +118,7 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
                 className="password-toggle"
                 onClick={togglePasswordVisibility}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                disabled={loading}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -90,13 +127,15 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
 
           <div className="form-remember">
             <label>
-              <input type="checkbox" />
+              <input type="checkbox" disabled={loading} />
               <span>Lembrar-me</span>
             </label>
             <a href="#forgot" className="forgot-link">Esqueci a senha?</a>
           </div>
 
-          <button type="submit" className="login-button">Login</button>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Entrando...' : 'Login'}
+          </button>
         </form>
 
         <div className="login-divider">
