@@ -1,0 +1,131 @@
+.protected-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.access-denied-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 48px 32px;
+  text-align: center;
+  max-width: 450px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.access-denied-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background-color: #fef3c7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+}
+
+.access-denied-icon svg {
+  width: 48px;
+  height: 48px;
+  stroke: currentColor;
+}
+
+.access-denied-icon.error {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.access-denied-card h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+}
+
+.access-denied-card p {
+  font-size: 15px;
+  color: #556272;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.access-denied-card p strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.access-denied-subtext {
+  font-size: 14px;
+  color: #7c8fa3;
+  margin: 12px 0 24px 0 !important;
+}
+
+.access-denied-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 28px;
+  background-color: #1e293b;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.access-denied-button:hover {
+  background-color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.access-denied-button:active {
+  transform: translateY(0);
+}
+
+.access-denied-button.secondary {
+  background-color: #e2e8f0;
+  color: #556272;
+}
+
+.access-denied-button.secondary:hover {
+  background-color: #cbd5e1;
+  color: #0f172a;
+}
+
+@media (max-width: 640px) {
+  .protected-page-container {
+    min-height: 50vh;
+    padding: 24px 16px;
+  }
+
+  .access-denied-card {
+    padding: 32px 20px;
+  }
+
+  .access-denied-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .access-denied-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .access-denied-card h2 {
+    font-size: 20px;
+  }
+
+  .access-denied-card p {
+    font-size: 14px;
+  }
+}

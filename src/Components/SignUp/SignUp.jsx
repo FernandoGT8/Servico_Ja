@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './SignUp.css'
 
-export default function SignUp() {
+export default function SignUp({ onSignUpSuccess }) {
   const [currentStep, setCurrentStep] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   // Formulário - Etapa 1
   const [formData, setFormData] = useState({
@@ -51,10 +53,58 @@ export default function SignUp() {
     }
   }
 
-  const handleCreateAccount = (e) => {
+  const handleCreateAccount = async (e) => {
     e.preventDefault()
-    // TODO: Integrar com backend
-    console.log('Conta criada:', { formData, etapa2Data, etapa3Data, etapa4Data })
+    setError('')
+    setLoading(true)
+
+    // Validar senhas
+    if (etapa4Data.senha !== etapa4Data.senhaConfirm) {
+      setError('As senhas não conferem')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const payload = {
+        nome: formData.nome,
+        email: formData.email,
+        telefone: formData.telefone,
+        senha: etapa4Data.senha,
+        senhaConfirm: etapa4Data.senhaConfirm,
+        tipo: 'TRABALHADOR',
+        cpf: formData.cpf,
+        dataNascimento: new Date().toISOString().split('T')[0], // Placeholder
+      }
+
+      const response = await fetch('http://localhost:8080/api/usuarios/registrar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.mensagem || 'Erro ao registrar. Tente novamente.')
+        setLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      console.log('Conta criada com sucesso:', data)
+
+      // Armazenar token e dados do usuário
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data))
+
+      setLoading(false)
+      onSignUpSuccess?.()
+    } catch (err) {
+      setError('Erro ao conectar com o servidor. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   const handleAreaToggle = (area) => {
@@ -65,6 +115,15 @@ export default function SignUp() {
       return { ...prev, areaAtuacao: areas }
     })
   }
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   return (
     <div className="signup-container">
@@ -420,13 +479,21 @@ export default function SignUp() {
                 </div>
 
                 <div className="form-buttons">
-                  <button onClick={handleBack} className="back-button">Voltar</button>
-                  <button onClick={handleCreateAccount} className="continue-button">Criar conta</button>
+                  <button onClick={handleBack} className="back-button" disabled={loading}>Voltar</button>
+                  <button onClick={handleCreateAccount} className="continue-button" disabled={loading}>
+                    {loading ? 'Criando conta...' : 'Criar conta'}
+                  </button>
                 </div>
               </>
             )}
           </div>
         </div>
+
+        {error && (
+          <div className="signup-error-toast">
+            {error}
+          </div>
+        )}
       </div>
     </div>
   )

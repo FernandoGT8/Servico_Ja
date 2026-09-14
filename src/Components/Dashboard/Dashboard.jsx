@@ -11,23 +11,12 @@ export default function Dashboard({ onLogout }) {
     }
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    onLogout()
-  }
-
   if (!user) {
     return <div className="dashboard-loading">Carregando...</div>
   }
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Serviço Já - Dashboard</h1>
-        <button className="logout-btn" onClick={handleLogout}>Sair</button>
-      </header>
-
       <div className="dashboard-content">
         <div className="welcome-section">
           <h2>Bem-vindo, {user.nome}!</h2>

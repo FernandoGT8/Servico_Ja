@@ -5,6 +5,7 @@ import AdminForm from './Components/AdminForm/AdminForm'
 import Login from './Components/Login/Login'
 import SignUp from './Components/SignUp/SignUp'
 import Dashboard from './Components/Dashboard/Dashboard'
+import ProtectedPage from './Components/ProtectedPage/ProtectedPage'
 import './App.css'
 
 function App() {
@@ -14,25 +15,40 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return !!localStorage.getItem('token')
   })
+  const [user, setUser] = useState(() => {
+    const userData = localStorage.getItem('user')
+    return userData ? JSON.parse(userData) : null
+  })
 
   useEffect(() => {
     localStorage.setItem('currentPage', currentPage)
   }, [currentPage])
 
-  if (isLoggedIn) {
-    return <Dashboard onLogout={() => {
-      setIsLoggedIn(false)
-      setCurrentPage('home')
-    }} />
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setIsLoggedIn(false)
+    setUser(null)
+    setCurrentPage('home')
+  }
+
+  const headerProps = {
+    onLogoClick: () => setCurrentPage('home'),
+    onLoginClick: () => setCurrentPage('login'),
+    isLoggedIn,
+    user,
+    onLogout: handleLogout
   }
 
   if (currentPage === 'login') {
     return (
       <div className="app-container">
-        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
+        <Header {...headerProps} />
         <Login onLoginSuccess={() => {
+          const userData = JSON.parse(localStorage.getItem('user'))
+          setUser(userData)
           setIsLoggedIn(true)
-          setCurrentPage('dashboard')
+          setCurrentPage('home')
         }} onSignUpClick={() => setCurrentPage('signup')} />
         <Footer />
       </div>
@@ -42,8 +58,15 @@ function App() {
   if (currentPage === 'signup') {
     return (
       <div className="app-container">
-        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
-        <SignUp />
+        <Header {...headerProps} />
+        <SignUp
+          onSignUpSuccess={() => {
+            const userData = JSON.parse(localStorage.getItem('user'))
+            setUser(userData)
+            setIsLoggedIn(true)
+            setCurrentPage('dashboard')
+          }}
+        />
         <Footer />
       </div>
     )
@@ -52,8 +75,26 @@ function App() {
   if (currentPage === 'admin') {
     return (
       <div className="app-container">
-        <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
-        <AdminForm />
+        <Header {...headerProps} />
+        <ProtectedPage
+          isLoggedIn={isLoggedIn}
+          userType={user?.tipo}
+          requiredType="ADMIN"
+          onLoginClick={() => setCurrentPage('login')}
+          onHomeClick={() => setCurrentPage('home')}
+        >
+          <AdminForm />
+        </ProtectedPage>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (isLoggedIn && currentPage === 'dashboard') {
+    return (
+      <div className="app-container">
+        <Header {...headerProps} />
+        <Dashboard onLogout={handleLogout} />
         <Footer />
       </div>
     )
@@ -61,7 +102,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <Header onLogoClick={() => setCurrentPage('home')} onLoginClick={() => setCurrentPage('login')} />
+      <Header {...headerProps} />
 
       <main className="main-content">
         <section className="portal-section">
