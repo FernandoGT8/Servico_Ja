@@ -16,8 +16,8 @@
 .header-container {
   max-width: 1380px;
   margin: 0 auto;
-  padding: 0 36px;
-  height: 74px;
+  padding: 16px 36px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -30,7 +30,7 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 32px;
 }
 
 /* Logo Pill Badge */
@@ -65,7 +65,7 @@
 }
 
 .logo-text {
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.8px;
   color: #1e293b;
@@ -103,7 +103,7 @@
 .nav-link {
   text-decoration: none;
   color: #556272;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.1px;
   transition: color 0.2s ease;
@@ -131,7 +131,7 @@
   gap: 9px;
   text-decoration: none;
   color: #556272;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.1px;
   padding: 8px 12px;
@@ -222,7 +222,7 @@
 
   .header-nav {
     position: absolute;
-    top: 74px;
+    top: 100px;
     left: 0;
     width: 100%;
     background-color: #ffffff;
@@ -268,5 +268,155 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   User Profile Section (when logged in)
+   -------------------------------------------------------------------------- */
+.user-profile-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  font-family: inherit;
+}
+
+.user-profile-button:hover {
+  background-color: #f8fafc;
+}
+
+.user-profile-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #e2e8f0;
+}
+
+.user-profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.user-profile-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.user-profile-rating {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.user-profile-rating .star-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.user-profile-rating .star-icon.filled {
+  color: #fbbf24;
+  fill: #fbbf24;
+}
+
+.user-profile-rating .star-icon.empty {
+  color: #cbd5e1;
+  fill: #cbd5e1;
+}
+
+/* User Menu Dropdown */
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #556272;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.user-menu-item:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.user-menu-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+}
+
+.user-menu-divider {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+}
+
+.user-menu-item.logout-item {
+  color: #ef4444;
+}
+
+.user-menu-item.logout-item:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Design for User Profile
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .header-container {
+    height: 80px;
+    padding: 12px 24px;
+  }
+
+  .user-profile-info {
+    display: none;
+  }
+
+  .user-profile-image {
+    width: 44px;
+    height: 44px;
   }
 }
