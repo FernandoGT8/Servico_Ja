@@ -34,7 +34,7 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 - **Uma empresa cliente tem vários usuários**, com papéis diferentes → login por **email**,
   não por CNPJ (conflito com o Figma, ver `@PRD.md` §9)
 - **Interfaces**: Site institucional · App do Cliente · App do Prestador · Admin (backlog)
-- **~16 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
+- **~19 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
 - **Testes**: JUnit 5 + Jest, **cobertura mínima de 70% — requisito de entrega**
 
 ❌ **Sem WebSocket / chat** — saiu do escopo v1.
