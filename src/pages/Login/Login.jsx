@@ -1,7 +1,12 @@
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/useAuth'
+import { login as loginRequest } from '@/services/authService'
 import './Login.css'
 
-export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
+export default function Login() {
+  const { login } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -14,34 +19,14 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8080/api/usuarios/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          senha: password
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        setError(errorData.mensagem || 'Email ou senha inválidos')
-        setLoading(false)
-        return
-      }
-
-      const data = await response.json()
-
-      // Armazenar token no localStorage
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data))
-
+      const data = await loginRequest({ email, senha: password })
+      login(data)
       setLoading(false)
-      onLoginSuccess()
+      // Dashboard é a landing exclusiva de ADMIN/ANALISTA; os demais papéis
+      // ainda não têm um perfil real para onde redirecionar.
+      navigate(data.tipo === 'ADMIN' || data.tipo === 'ANALISTA' ? '/dashboard' : '/')
     } catch (err) {
-      setError('Erro ao conectar com o servidor. Tente novamente.')
+      setError(err.message || 'Erro ao conectar com o servidor. Tente novamente.')
       setLoading(false)
     }
   }
@@ -157,11 +142,11 @@ export default function Login({ onLoginSuccess, onLogoClick, onSignUpClick }) {
         <div className="login-footer">
           <p>
             <span>Você é Prestador de Serviços?</span>
-            <a href="#signup" onClick={(e) => { e.preventDefault(); onSignUpClick?.(); }} className="link">Cadastre-se</a>
+            <Link to="/register/provider" className="link">Cadastre-se</Link>
           </p>
           <p>
             <span>Você tem uma Empresa?</span>
-            <a href="#signup" onClick={(e) => { e.preventDefault(); onSignUpClick?.(); }} className="link">Contrate</a>
+            <Link to="/register/client" className="link">Contrate</Link>
           </p>
         </div>
       </div>

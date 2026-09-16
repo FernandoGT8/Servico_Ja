@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import './AdminForm.css'
+import './RegisterClient.css'
 
-export default function AdminForm() {
+export default function RegisterClient() {
   const [currentStep, setCurrentStep] = useState(0)
   const [showAnimation, setShowAnimation] = useState(false)
   const isFirstRender = useRef(true)

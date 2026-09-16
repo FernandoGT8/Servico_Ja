@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
-import './SignUp.css'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/useAuth'
+import { register } from '@/services/authService'
+import './RegisterProvider.css'
 
-export default function SignUp({ onSignUpSuccess }) {
+export default function RegisterProvider() {
+  const { login } = useAuth()
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -77,32 +82,13 @@ export default function SignUp({ onSignUpSuccess }) {
         dataNascimento: new Date().toISOString().split('T')[0], // Placeholder
       }
 
-      const response = await fetch('http://localhost:8080/api/usuarios/registrar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        setError(errorData.mensagem || 'Erro ao registrar. Tente novamente.')
-        setLoading(false)
-        return
-      }
-
-      const data = await response.json()
-      console.log('Conta criada com sucesso:', data)
-
-      // Armazenar token e dados do usuário
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data))
-
+      const data = await register(payload)
+      login(data)
       setLoading(false)
-      onSignUpSuccess?.()
+      // Prestador ainda não tem perfil real implementado — cai na Home.
+      navigate('/')
     } catch (err) {
-      setError('Erro ao conectar com o servidor. Tente novamente.')
+      setError(err.message || 'Erro ao conectar com o servidor. Tente novamente.')
       setLoading(false)
     }
   }

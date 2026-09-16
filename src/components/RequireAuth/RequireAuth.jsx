@@ -1,19 +1,11 @@
-import React from 'react';
-import './ProtectedPage.css';
+import { Outlet, Link } from 'react-router-dom'
+import { useAuth } from '@/contexts/useAuth'
+import './RequireAuth.css'
 
-export default function ProtectedPage({ isLoggedIn, userType, requiredType, onLoginClick, onHomeClick, children }) {
-  const handleLoginClick = (e) => {
-    e.preventDefault();
-    onLoginClick?.();
-  };
+export default function RequireAuth({ allowedRoles }) {
+  const { isAuthenticated, user } = useAuth()
 
-  const handleHomeClick = (e) => {
-    e.preventDefault();
-    onHomeClick?.();
-  };
-
-  // Se não está logado
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
     return (
       <div className="protected-page-container">
         <div className="access-denied-card">
@@ -26,16 +18,15 @@ export default function ProtectedPage({ isLoggedIn, userType, requiredType, onLo
           </div>
           <h2>Acesso Restrito</h2>
           <p>É necessário estar <strong>logado</strong> para visualizar essa tela.</p>
-          <button onClick={handleLoginClick} className="access-denied-button">
+          <Link to="/login" className="access-denied-button">
             Fazer Login
-          </button>
+          </Link>
         </div>
       </div>
-    );
+    )
   }
 
-  // Se está logado mas não tem o tipo correto
-  if (userType !== requiredType) {
+  if (allowedRoles && !allowedRoles.includes(user?.tipo)) {
     return (
       <div className="protected-page-container">
         <div className="access-denied-card">
@@ -49,16 +40,15 @@ export default function ProtectedPage({ isLoggedIn, userType, requiredType, onLo
           <h2>Acesso Negado</h2>
           <p>Você não possui permissão para acessar essa área.</p>
           <p className="access-denied-subtext">
-            Seu tipo de conta: <strong>{userType}</strong>
+            Seu tipo de conta: <strong>{user?.tipo}</strong>
           </p>
-          <button onClick={handleHomeClick} className="access-denied-button secondary">
+          <Link to="/" className="access-denied-button secondary">
             Voltar para Home
-          </button>
+          </Link>
         </div>
       </div>
-    );
+    )
   }
 
-  // Se tem permissão, renderiza o conteúdo
-  return children;
+  return <Outlet />
 }

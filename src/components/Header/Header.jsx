@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/useAuth';
 import './Header.css';
 
-export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, onLogout, onUserMenuClick }) {
+export default function Header() {
+  const { isAuthenticated, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -12,12 +15,11 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
 
   const handleUserMenuClick = () => {
     setIsUserMenuOpen((prev) => !prev);
-    onUserMenuClick?.();
   };
 
   const handleLogout = () => {
     setIsUserMenuOpen(false);
-    onLogout?.();
+    logout();
   };
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
       <div className="header-container">
         {/* Lado Esquerdo: Logo, Divisor e Navegação */}
         <div className="header-left">
-          <a href="#" onClick={(e) => { e.preventDefault(); onLogoClick?.(); }} className="header-logo-badge" aria-label="Logo">
+          <Link to="/" className="header-logo-badge" aria-label="Logo">
             <svg
               className="logo-star-icon"
               viewBox="0 0 24 24"
@@ -51,20 +53,20 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
             <span className="logo-text">LOGO</span>
-          </a>
+          </Link>
 
           <div className="header-divider" aria-hidden="true" />
 
           <nav className={`header-nav ${isMenuOpen ? 'is-open' : ''}`} aria-label="Navegação Principal">
             <ul className="nav-list">
               <li className="nav-item">
-                <a href="#home" onClick={(e) => { e.preventDefault(); onLogoClick?.(); }} className="nav-link">Home</a>
+                <Link to="/" className="nav-link">Home</Link>
               </li>
               <li className="nav-item">
-                <a href="#empresa" className="nav-link">Sou Empresa</a>
+                <Link to="/business" className="nav-link">Sou Empresa</Link>
               </li>
               <li className="nav-item">
-                <a href="#profissional" className="nav-link">Sou Profissional</a>
+                <Link to="/partners" className="nav-link">Sou Profissional</Link>
               </li>
               <li className="nav-item">
                 <a href="#sobre-nos" className="nav-link">Sobre Nós</a>
@@ -78,7 +80,7 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
 
         {/* Lado Direito: Login ou Perfil do Usuário */}
         <div className="header-right">
-          {isLoggedIn && user ? (
+          {isAuthenticated && user ? (
             <div className="user-profile-container" ref={userMenuRef}>
               <button
                 onClick={handleUserMenuClick}
@@ -135,7 +137,7 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
               )}
             </div>
           ) : (
-            <a href="#login" onClick={(e) => { e.preventDefault(); onLoginClick?.(); }} className="login-button">
+            <Link to="/login" className="login-button">
               <svg
                 className="login-icon"
                 viewBox="0 0 24 24"
@@ -150,7 +152,7 @@ export default function Header({ onLogoClick, onLoginClick, isLoggedIn, user, on
                 <circle cx="12" cy="7" r="4" />
               </svg>
               <span className="login-text">Login</span>
-            </a>
+            </Link>
           )}
 
           {/* Botão de Menu para Dispositivos Móveis */}

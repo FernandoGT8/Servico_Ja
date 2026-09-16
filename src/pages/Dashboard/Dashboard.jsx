@@ -1,15 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/useAuth'
 import './Dashboard.css'
 
-export default function Dashboard({ onLogout }) {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user')
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
-  }, [])
+export default function Dashboard() {
+  const { user } = useAuth()
 
   if (!user) {
     return <div className="dashboard-loading">Carregando...</div>
