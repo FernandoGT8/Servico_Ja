@@ -5,6 +5,11 @@
 **Última atualização**: 15/09/2026 — decisões da Sessão 2 incorporadas (ver §11)
 **Método**: Figma MCP (`get_metadata`) — leitura estrutural de nós, nomes de camadas e conteúdo de texto.
 
+> **O Figma é o protótipo, não um contrato.** Decisão de 15/09/2026: o desenho é o esqueleto
+> que orientou o levantamento das regras; o código pode divergir dele. A fonte de verdade do
+> projeto é o `PRD.md`. Este arquivo continua valendo como **mapeamento do design e histórico
+> das decisões** — inclusive das que contrariam o desenho.
+>
 > ATENÇÃO — cobertura parcial. O plano Starter do Figma MCP impôs rate limit no meio do
 > mapeamento. Ver seção 7 (Lacunas) para o que ficou de fora.
 
@@ -441,12 +446,20 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
 
 → A **matriz de permissões completa** está em `PRD.md` §3.6.
 
+### Rodada 3 — decidido
+26. **O Figma é protótipo**, não contrato de telas. O `PRD.md` passa a ser a fonte de verdade.
+    Isso **encerra** os conflitos de design pendentes (login por email vs "Conta: CNPJ · Senha"
+    nos perfis): o código segue o PRD, o desenho se ajusta depois.
+27. **O Cliente vê os dados de contato do prestador** (nome, telefone, email) — resolve o furo
+    de comunicação criado por tirar o chat do escopo. Documentos continuam invisíveis para ele.
+28. **Campos calculados pelo sistema são imutáveis, nem o `ADMIN` edita**: `valor_total`,
+    `valor_dia`, quantidade de diárias, `percentual_taxa`, `valor_taxa`, dias agenciados e
+    saldos. A API rejeita esses campos no request. Lista completa em `PRD.md` §4.5.
+
 ### Ainda em aberto
 - **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões
   configurável? *(adiado: "vamos verificar depois")*
-- ⚠️ **Canal de contato cliente ↔ prestador** — o chat saiu do escopo e o cliente não vê
-  contato nem documentos. Depois da seleção as partes não têm como combinar horário e acesso
-  à obra.
 - **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de lançamento
-  compensatório para alteração financeira pós-seleção.
+  compensatório para recálculo financeiro pós-seleção.
+- **Endereço da obra** — o contrato só tem cidade e estado.
 - **Ações por estado do contrato** — editar/cancelar em `Rascunho` ≠ em `Em Execução`

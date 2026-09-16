@@ -16,11 +16,12 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 
 ## Fonte de Verdade
 
-1. **Figma** (`ONnLf1dmAXa8SsZfIzYd4p`) — fonte de verdade do **modelo de negócio e das telas**
-2. **@Figma.log** — mapeamento do Figma + histórico de decisões
-3. **@PRD.md** — especificação; foi reescrito (v2.0) para bater com o Figma
+1. **@PRD.md** — **fonte de verdade**. Regras de negócio, permissões e modelo de dados.
+2. **@Figma.log** — mapeamento do design + histórico de todas as decisões e por quê
+3. **Figma** (`ONnLf1dmAXa8SsZfIzYd4p`) — **protótipo**: esqueleto visual e referência de telas
 
-⚠️ Em divergência entre PRD e Figma, **o Figma prevalece** — avise e corrija o PRD.
+⚠️ O Figma **não é contrato**. Onde o código precisar divergir do desenho, diverge — mas avise.
+Em divergência entre PRD e Figma, **o PRD prevalece**.
 
 ---
 
@@ -75,10 +76,16 @@ Errar qualquer uma destas quebra o produto:
 10. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
 11. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
     `Pendente` navega (vê mural e perfis, completa o cadastro) mas **não transaciona**.
-12. **O Cliente nunca vê documentos do prestador** (RG/CNH, comprovantes). Vê só foto,
-    habilidades e "sobre". Documentos: só o time Serviços Já! e o próprio prestador.
-13. **Toda ação de `ADMIN` é auditada** (`log_auditoria`). Alteração financeira depois da
-    seleção gera lançamento compensatório no extrato, nunca edição silenciosa.
+12. **O Cliente nunca vê documentos do prestador** (RG/CNH, comprovantes). Vê foto,
+    habilidades, "sobre" e **contato**. Documentos: só o time Serviços Já! e o próprio prestador.
+13. **Campos calculados são imutáveis — nem o `ADMIN` edita**: `valor_total`, `valor_dia`,
+    quantidade de diárias, `percentual_taxa`, `valor_taxa`, dias agenciados e saldos. A API
+    **rejeita** esses campos no corpo da requisição; não basta desabilitar o input. Ver
+    `@PRD.md` §4.5.
+14. **Toda ação de `ADMIN` é auditada** (`log_auditoria`). Recálculo financeiro depois da
+    seleção gera lançamento compensatório no extrato, nunca ajuste silencioso.
+15. **O Cliente vê o contato do prestador** (nome, telefone, email) a partir da seleção —
+    mas nunca os documentos.
 
 ---
 
@@ -141,7 +148,8 @@ modelagem, permissões e convenções.
 - **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões?
 - **Canal de contato cliente ↔ prestador** — sem chat e sem dados de contato, as partes não
   têm como se falar depois da seleção.
-- **Backend desatualizado** — `Servco-Ja-Back` carrega cópias do PRD v1.0 e do CLAUDE.md antigo.
+- **Backend** (`Servco-Ja-Back`) — ver `@BACKEND_ANALISE.md`: segurança desligada
+  (`permitAll()`), credenciais commitadas, modelo de 1 tabela, zero testes.
 
 A matriz de permissões está em `@PRD.md` §3.6. Ver `@PRD.md` §9 para o resto.
 

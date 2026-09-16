@@ -7,6 +7,10 @@
 **Status**: Em Desenvolvimento
 **Deadline**: 31/10/2026
 
+> **Este documento é a fonte de verdade do projeto.** O Figma é o **protótipo** — um esqueleto
+> visual que orientou o levantamento das regras, não um contrato de telas. Onde o código
+> precisar divergir do desenho, diverge; o que não pode divergir é o que está escrito aqui.
+>
 > **Nota de versão — o que mudou da v1.0 para a v2.0**
 > A v1.0 descrevia um **marketplace B2B genérico** (RFQ, propostas, chat, assinatura digital,
 > avaliação bilateral, disputas e multas). O mapeamento do Figma (15/09/2026, ver `Figma.log`)
@@ -133,11 +137,11 @@ Implicações:
   perfil, **adicionar e remover informações**, gerenciar catálogos e usuários internos, e
   auditoria financeira.
 
-> ⚠️ O `ADMIN` edita contratos que já têm dinheiro reservado e dias apurados. Mexer em
-> `valor_total`, `percentual_taxa` ou nos dias de um contrato em execução corrompe a reserva de
-> crédito e a apuração mensal. **Toda ação de ADMIN precisa ser auditada** (`log_auditoria`) e
-> alterações financeiras após a seleção do prestador devem gerar **lançamento compensatório** no
-> extrato, nunca edição silenciosa. Ver §9.
+> 🔒 **Campos calculados pelo sistema são imutáveis — nem o `ADMIN` edita.** Ver §4.5.
+> O `ADMIN` edita campos de **entrada**; os **derivados** são sempre recalculados a partir deles.
+> Como editar uma entrada recalcula os derivados de um contrato que já tem dinheiro reservado,
+> **toda ação de `ADMIN` é registrada em `log_auditoria`** e recálculo financeiro após a seleção
+> gera **lançamento compensatório** no extrato, nunca ajuste silencioso.
 - **Tela `/admin`**: ⏸️ **backlog** — será a tela inicial dos Administradores com dados da
   plataforma. Não há frame desenhado ainda.
 
@@ -251,9 +255,14 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
       secundárias · **documento de identificação (RG ou CNH)** ·
       **documentos de experiência** (anexos)
 
-> 🔒 **O Cliente nunca vê os documentos do prestador.** Vê apenas **foto do perfil, habilidades
-> e "sobre"**. A plataforma **atesta** a validação em vez de repassar dado pessoal sensível —
-> postura mais defensável em LGPD.
+> 🔒 **O Cliente nunca vê os documentos do prestador** (RG/CNH, comprovantes de experiência).
+> Vê **foto do perfil, habilidades, "sobre"** e os **dados de contato** (nome, telefone e email).
+> A plataforma **atesta** a validação documental em vez de repassar dado pessoal sensível —
+> postura defensável em LGPD — mas libera o contato para que as partes possam combinar a
+> execução, já que não há chat no MVP.
+>
+> *Aplicado a partir da **seleção** do prestador, que é o ponto onde a relação contratual nasce
+> e o contato passa a ser necessário. Se você quiser liberar já na candidatura, é só dizer.*
 - [ ] **Habilidades**: áreas de atuação · nível de conhecimento por área ·
       "já atuou como terceirizado?"
 - [ ] **Contratos**: histórico
@@ -302,6 +311,28 @@ Tudo acima em leitura, **mais**:
 
 #### Cardinalidade
 **1 contrato : 1 prestador.** Várias candidaturas, **uma única seleção**.
+
+#### 🔒 Campos calculados — imutáveis por qualquer papel
+
+Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados:
+
+| Campo derivado | Calculado a partir de |
+|---|---|
+| `valor_total` *(Diária)* | nº de diárias × valor por dia |
+| `valor_dia` *(Empreitada)* | valor total ÷ dias do período |
+| quantidade de diárias / dias de trabalho | as datas registradas em `dia_contrato` |
+| `percentual_taxa` | faixa vigente do cliente, congelada na publicação (§2.2) |
+| `valor_taxa` | `valor_total` × `percentual_taxa` |
+| dias agenciados do mês | agregação de `dia_contrato` (§2.2) |
+| `saldo_disponivel` / `saldo_reservado` | soma das linhas de `transacao_credito` |
+| IDs, data de cadastro, data de seleção, data de aprovação da NF | o próprio evento |
+
+**Campos de entrada** (editáveis conforme o papel e o estado): tipo de contrato, tipo de
+serviço, localização, datas, valor por dia *(Diária)* ou valor total *(Empreitada)*, dias de
+trabalho e folga, condições de operação, cursos, habilidades e descrição.
+
+> A UI deve exibir os derivados como **somente leitura**, e a API deve **ignorar ou rejeitar**
+> esses campos no corpo da requisição — não basta desabilitar o input no front.
 
 ### 4.6 Mural de Oportunidades (`/provider/opportunities`)
 - [ ] Listagem de contratos abertos em cards (logo da empresa, ID, tipo, descrição)
@@ -484,13 +515,10 @@ O projeto será considerado **completo** quando:
 ### Bloqueiam a modelagem do banco
 - [ ] **Mecanismo de autorização**: enum `role` + `@PreAuthorize`, ou tabela de permissões
       configurável? *(adiado na Sessão 3 — "vamos verificar depois")*
-- [ ] ⚠️ **Canal de contato cliente ↔ prestador.** O chat saiu do escopo e o cliente não vê os
-      documentos nem os dados de contato do prestador. Depois da seleção, **as duas partes não
-      têm como se falar** para combinar horário, local e acesso à obra.
-      Opções: liberar telefone/email do prestador ao cliente após a seleção; ou expor os dados
-      da obra no contrato e deixar o contato fora da plataforma.
-- [ ] **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de que alteração
-      financeira após a seleção gera lançamento compensatório, nunca edição silenciosa.
+- [ ] **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de que recálculo
+      financeiro após a seleção gera lançamento compensatório, nunca ajuste silencioso.
+- [ ] **Endereço da obra** — o contrato só tem cidade e estado. Falta o endereço de execução,
+      necessário agora que as partes se falam direto.
 
 ### Regras a definir
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
@@ -537,4 +565,4 @@ O projeto será considerado **completo** quando:
 ---
 
 **Nota**: este PRD é vivo. Qualquer mudança deve ser comunicada ao time. Em caso de divergência
-entre este documento e o Figma, **o Figma prevalece** e o PRD deve ser corrigido.
+entre este documento e o Figma, **este documento prevalece** — o Figma é protótipo.
