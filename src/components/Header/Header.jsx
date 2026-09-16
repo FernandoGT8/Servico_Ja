@@ -1,7 +1,49 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
-import './Header.css';
+
+const STAR_PATH = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
+const PERSON_PATH = 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2';
+
+const NAV_LINKS = [
+  { to: '/', label: 'Home' },
+  { to: '/business', label: 'Sou Empresa' },
+  { to: '/partners', label: 'Sou Profissional' },
+];
+
+function StarIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d={STAR_PATH} />
+    </svg>
+  );
+}
+
+function PersonIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={PERSON_PATH} />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function MenuIcon({ open, className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+    </svg>
+  );
+}
+
+function LogoBadge() {
+  return (
+    <Link to="/" aria-label="Logo" className="inline-flex shrink-0 items-center justify-center gap-3 rounded-full bg-gray-200 px-6 py-4 transition-colors hover:bg-gray-300">
+      <StarIcon className="h-3.5 w-3.5 shrink-0 text-zinc-800" />
+      <span className="font-dm-sans text-base font-bold leading-4 tracking-wide text-zinc-800">LOGO</span>
+    </Link>
+  );
+}
 
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -9,14 +51,8 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
-  const toggleMenu = () => {
-    setIsMenuOpen((prev) => !prev);
-  };
-
-  const handleUserMenuClick = () => {
-    setIsUserMenuOpen((prev) => !prev);
-  };
-
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const handleUserMenuClick = () => setIsUserMenuOpen((prev) => !prev);
   const handleLogout = () => {
     setIsUserMenuOpen(false);
     logout();
@@ -39,96 +75,102 @@ export default function Header() {
   }, [isUserMenuOpen]);
 
   return (
-    <header className="header">
-      <div className="header-container">
-        {/* Lado Esquerdo: Logo, Divisor e Navegação */}
-        <div className="header-left">
-          <Link to="/" className="header-logo-badge" aria-label="Logo">
-            <svg
-              className="logo-star-icon"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            <span className="logo-text">LOGO</span>
-          </Link>
+    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-gray-50">
+      <div className="mx-auto flex max-w-[1380px] items-center justify-between gap-4 px-5 py-4 sm:px-9 lg:px-16">
+        {/* Lado esquerdo: Logo (+ navegação, só no site público) */}
+        <div className="flex items-center gap-8">
+          <LogoBadge />
 
-          <div className="header-divider" aria-hidden="true" />
-
-          <nav className={`header-nav ${isMenuOpen ? 'is-open' : ''}`} aria-label="Navegação Principal">
-            <ul className="nav-list">
-              <li className="nav-item">
-                <Link to="/" className="nav-link">Home</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/business" className="nav-link">Sou Empresa</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/partners" className="nav-link">Sou Profissional</Link>
-              </li>
-              <li className="nav-item">
-                <a href="#sobre-nos" className="nav-link">Sobre Nós</a>
-              </li>
-              <li className="nav-item">
-                <a href="#contato" className="nav-link">Contato</a>
-              </li>
-            </ul>
-          </nav>
+          {!isAuthenticated && (
+            <div className="hidden h-10 w-0.5 shrink-0 rounded-xs bg-gray-200 lg:block" aria-hidden="true" />
+          )}
         </div>
 
-        {/* Lado Direito: Login ou Perfil do Usuário */}
-        <div className="header-right">
-          {isAuthenticated && user ? (
-            <div className="user-profile-container" ref={userMenuRef}>
-              <button
-                onClick={handleUserMenuClick}
-                className="user-profile-button"
-                aria-label="Abrir menu do usuário"
+        {/* Navegação pública — some quando autenticado (o app usa a Sidebar) */}
+        {!isAuthenticated && (
+          <nav
+            aria-label="Navegação Principal"
+            className={`${isMenuOpen ? 'flex' : 'hidden'} absolute inset-x-0 top-full flex-col gap-1 border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-9 lg:static lg:flex lg:w-auto lg:flex-1 lg:flex-row lg:items-center lg:gap-7 lg:border-0 lg:bg-transparent lg:p-0`}
+          >
+            {NAV_LINKS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="rounded-lg px-2 py-2.5 text-center text-base font-bold leading-4 text-slate-500 transition-colors hover:text-zinc-800 lg:px-0 lg:py-1.5"
               >
-                <img
-                  src={user.foto || 'https://via.placeholder.com/40'}
-                  alt={user.nome}
-                  className="user-profile-image"
-                />
-                <div className="user-profile-info">
-                  <span className="user-profile-name">{user.nome}</span>
-                  <div className="user-profile-rating">
+                {label}
+              </Link>
+            ))}
+            <a href="#sobre-nos" className="rounded-lg px-2 py-2.5 text-center text-base font-bold leading-4 text-slate-500 transition-colors hover:text-zinc-800 lg:px-0 lg:py-1.5">
+              Sobre Nós
+            </a>
+            <a href="#contato" className="rounded-lg px-2 py-2.5 text-center text-base font-bold leading-4 text-slate-500 transition-colors hover:text-zinc-800 lg:px-0 lg:py-1.5">
+              Contato
+            </a>
+          </nav>
+        )}
+
+        {/* Lado direito: Login/Perfil */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated && user ? (
+            <div className="relative flex items-center" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={handleUserMenuClick}
+                className="flex items-center gap-2.5 rounded-lg p-1.5 transition-colors hover:bg-white"
+                aria-label="Abrir menu do usuário"
+                aria-expanded={isUserMenuOpen}
+              >
+                <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-full bg-blue-500">
+                  {user.foto ? (
+                    <img src={user.foto} alt={user.nome} className="h-full w-full object-cover" />
+                  ) : (
+                    <PersonIcon className="absolute inset-0 m-auto h-6 w-6 text-white" />
+                  )}
+                </span>
+                <span className="hidden w-28 flex-col items-center gap-1.5 sm:flex">
+                  <span className="w-full truncate text-center text-base font-bold leading-4 text-slate-500">
+                    {user.nome}
+                  </span>
+                  <span className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <svg
+                      <StarIcon
                         key={i}
-                        className={`star-icon ${i < (user.avaliacao || 0) ? 'filled' : 'empty'}`}
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
+                        className={`h-4 w-4 ${i < (user.avaliacao || 0) ? 'text-amber-400' : 'text-gray-300'}`}
+                      />
                     ))}
-                  </div>
-                </div>
+                  </span>
+                </span>
               </button>
 
               {isUserMenuOpen && (
-                <div className="user-menu-dropdown">
-                  <a href="#perfil" onClick={(e) => { e.preventDefault(); setIsUserMenuOpen(false); }} className="user-menu-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
+                <div className="absolute right-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <a
+                    href="#perfil"
+                    onClick={(e) => { e.preventDefault(); setIsUserMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-gray-50 hover:text-zinc-900"
+                  >
+                    <PersonIcon className="h-4.5 w-4.5 shrink-0" />
                     Meu Perfil
                   </a>
-                  <a href="#configuracoes" onClick={(e) => { e.preventDefault(); setIsUserMenuOpen(false); }} className="user-menu-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <a
+                    href="#configuracoes"
+                    onClick={(e) => { e.preventDefault(); setIsUserMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-gray-50 hover:text-zinc-900"
+                  >
+                    <svg className="h-4.5 w-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <circle cx="12" cy="12" r="1" />
                       <path d="M12 1v6m0 6v4M4.22 4.22l4.24 4.24m2.84 2.84l4.24 4.24M1 12h6m6 0h4M4.22 19.78l4.24-4.24m2.84-2.84l4.24-4.24M19.78 19.78l-4.24-4.24m-2.84-2.84l-4.24-4.24" />
                     </svg>
                     Configurações
                   </a>
-                  <hr className="user-menu-divider" />
-                  <button onClick={handleLogout} className="user-menu-item logout-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <hr className="my-2 border-gray-200" />
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <svg className="h-4.5 w-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                       <path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h4m7-4l4-4m0 0l-4-4m4 4H9" />
                     </svg>
                     Sair
@@ -137,35 +179,24 @@ export default function Header() {
               )}
             </div>
           ) : (
-            <Link to="/login" className="login-button">
-              <svg
-                className="login-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <span className="login-text">Login</span>
+            <Link
+              to="/login"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-base font-bold leading-4 text-slate-500 transition-colors hover:bg-white hover:text-zinc-800"
+            >
+              <PersonIcon className="h-5 w-5 shrink-0" />
+              <span className="hidden lg:inline">Login</span>
             </Link>
           )}
 
-          {/* Botão de Menu para Dispositivos Móveis */}
+          {/* Toggle do menu mobile: nav pública (site) ou menu do usuário (app) */}
           <button
             type="button"
-            className={`mobile-menu-toggle ${isMenuOpen ? 'active' : ''}`}
-            onClick={toggleMenu}
-            aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
-            aria-expanded={isMenuOpen}
+            onClick={isAuthenticated ? handleUserMenuClick : toggleMenu}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white lg:hidden"
+            aria-label={isMenuOpen || isUserMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={isAuthenticated ? isUserMenuOpen : isMenuOpen}
           >
-            <span className="hamburger-line" />
-            <span className="hamburger-line" />
-            <span className="hamburger-line" />
+            <MenuIcon open={isAuthenticated ? isUserMenuOpen : isMenuOpen} className="h-6 w-6 text-slate-500" />
           </button>
         </div>
       </div>
