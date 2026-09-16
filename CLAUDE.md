@@ -29,12 +29,12 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 **Frontend** (React+Vite) → **Backend** (Java+Spring, REST) → **Database** (PostgreSQL)
 
 - **Autenticação**: Spring Security + **JWT**, senhas em **BCrypt**
-- **Autorização**: por **Roles**. 5 papéis: `ADMIN` · `ANALISTA` · `CLIENTE_ADMIN` ·
-  `CLIENTE_ANALISTA` · `PRESTADOR`. Mecanismo (enum vs tabela de permissões) a definir.
-- **Uma empresa cliente tem vários usuários**, com papéis diferentes → login por **email**,
-  não por CNPJ (conflito com o Figma, ver `@PRD.md` §9)
+- **Autorização**: por **Roles**. 4 papéis: `ADMIN` · `ANALISTA` · `CLIENTE` · `PRESTADOR`.
+  Mecanismo (enum vs tabela de permissões) a definir.
+- **Login conforme o Figma**: **CNPJ** (Cliente) · **CPF** (Prestador) · email (interno).
+  **Um login por empresa.** Vários usuários por empresa com login por email → backlog
 - **Interfaces**: Site institucional · App do Cliente · App do Prestador · Admin (backlog)
-- **~19 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
+- **~17 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
 - **Testes**: JUnit 5 + Jest, **cobertura mínima de 70% — requisito de entrega**
 
 ❌ **Sem WebSocket / chat** — saiu do escopo v1.
@@ -133,12 +133,10 @@ modelagem, permissões e convenções.
 
 ## Pendências que Bloqueiam Implementação
 
-- **Login por CNPJ não funciona** com vários usuários por empresa — precisa ser email + senha.
-  Muda `/login` e `/client/profile/{uuid}` no Figma.
 - **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões?
-- **Fronteira entre os papéis** — `CLIENTE_ADMIN` × `CLIENTE_ANALISTA` e `ADMIN` × `ANALISTA`
-- **Como um usuário entra numa empresa** — convite? auto-cadastro por CNPJ? quem é o primeiro?
+- **Fronteira `ADMIN` × `ANALISTA`** — o que o analista não pode fazer?
 - **Visibilidade dos documentos pessoais do prestador** (RG/CNH) — LGPD
+- **Campo de login** — um campo que aceita CNPJ/CPF/email, ou o usuário escolhe o tipo?
 
 É a **única** pendência que ainda bloqueia o diagrama ER. Ver `@PRD.md` §9 para o resto.
 

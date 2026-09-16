@@ -135,13 +135,14 @@ Implicações:
 - **Tela `/admin`**: ⏸️ **backlog** — será a tela inicial dos Administradores com dados da
   plataforma. Não há frame desenhado ainda.
 
-### 3.2 Cliente (Empresa Contratante) — **vários usuários por empresa**
+### 3.2 Cliente (Empresa Contratante)
 - **Quem**: empresas que precisam de mão de obra
-- **Identificação da empresa**: **CNPJ**
-- ❗ **Uma empresa tem vários logins, com papéis diferentes**:
-  - **`CLIENTE_ADMIN`** — responsável pela empresa; movimenta dinheiro e gere a equipe
-  - **`CLIENTE_ANALISTA`** — opera contratos sem (ou com menos) poder financeiro
-  - *(a fronteira exata entre os dois está em aberto — §9)*
+- **Identificação e login**: **CNPJ + senha** — conforme o Figma
+- ❗ **Um login por empresa** no MVP. O campo "Responsável" do perfil é um dado da empresa,
+  não um segundo usuário.
+- ⏸️ **Backlog**: vários usuários por empresa, com login por **email** e papéis distintos
+  (`CLIENTE_ADMIN` / `CLIENTE_ANALISTA`). Exige mudar a credencial e criar telas de gestão de
+  equipe — ver §8.
 - **Fluxo**: cadastro → validação de CNPJ → compra de créditos → publicação de contrato →
   seleção de prestador → acompanhamento da execução → aprovação da NF
 
@@ -153,16 +154,16 @@ Implicações:
 
 ### 3.4 Papéis (roles)
 
-| Papel | Escopo | Quem é |
-|---|---|---|
-| `ADMIN` | plataforma | time Serviços Já! — acesso total |
-| `ANALISTA` | plataforma | time Serviços Já! — validação e liberação de acesso |
-| `CLIENTE_ADMIN` | uma empresa | responsável pela empresa contratante |
-| `CLIENTE_ANALISTA` | uma empresa | operador da empresa contratante |
-| `PRESTADOR` | ele mesmo | profissional individual |
+| Papel | Escopo | Login | Quem é |
+|---|---|---|---|
+| `ADMIN` | plataforma | email | time Serviços Já! — acesso total |
+| `ANALISTA` | plataforma | email | time Serviços Já! — validação e liberação de acesso |
+| `CLIENTE` | uma empresa | **CNPJ** | a empresa contratante (login único) |
+| `PRESTADOR` | ele mesmo | **CPF** | profissional individual |
 
-São **5 papéis** — o mesmo número da hierarquia proposta na Sessão 1. A diferença é o
-**mecanismo**: `role` em uma única entidade `usuario`, não herança de 5 classes.
+**4 papéis no MVP**, com `role` numa única entidade `usuario` — não herança de classes.
+A hierarquia de 5 classes da Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/
+`CompanyAdm`/`Provider`) fica sem os dois papéis intra-empresa, que foram para o backlog (§8).
 *(Mecanismo de autorização ainda não decidido — §9.)*
 
 ### 3.5 Status de acesso
@@ -177,14 +178,7 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 
 ### 4.1 Autenticação e Cadastro
 - [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
-
-> ⚠️ **Conflito com o design.** O Figma mostra o login da empresa por **CNPJ + senha** e a tela
-> `/client/profile/{uuid}` traz "Conta: CNPJ · Senha" como credencial única. Isso pressupõe
-> **um login por empresa**. Com a decisão de **vários usuários por empresa**, o CNPJ deixa de
-> identificar uma pessoa: dois funcionários da mesma empresa teriam o mesmo CNPJ.
-> **O login precisa passar a ser por email.** Ver §9.
-
-- [ ] **Gestão de equipe da empresa** (convite/vínculo de usuários) — **não há tela no Figma**
+- [ ] Credencial conforme o perfil: **CNPJ** (Cliente) · **CPF** (Prestador) · email (interno)
 - [ ] Cadastro de Cliente B2B (`/register/client`)
 - [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
       de privacidade
@@ -362,9 +356,7 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 
 | Tabela | Conteúdo |
 |---|---|
-| `usuario` | **email** (login), senha, `role`, status de acesso, data de cadastro |
-| `usuario_cliente` | vínculo N:1 entre usuário e empresa cliente *(ou FK `cliente_id` em `usuario`)* |
-| `convite` | convite de um `CLIENTE_ADMIN` a um novo usuário da sua empresa |
+| `usuario` | `login` (CNPJ, CPF ou email), senha, `role`, status de acesso, data de cadastro |
 | `cliente` | dados da empresa contratante (CNPJ, segmento, responsável, CNAE, endereço) |
 | `prestador` | dados do profissional (CPF, CNPJ MEI, endereço, aceite de termos) |
 | `documento` | anexos do prestador (RG/CNH, comprovantes de experiência) |
@@ -382,7 +374,7 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 | `nota_fiscal` | anexo, data de emissão, data de aprovação |
 | `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados (agregação de `dia_contrato`) e **faixa vigente no mês seguinte** |
 
-**~19 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
+**~17 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
 de crédito.
 
 ---
@@ -410,6 +402,12 @@ O projeto será considerado **completo** quando:
 
 ## 8. Fora do Escopo v1 / Backlog
 
+### Adiado em 15/09/2026
+- ⏸️ **Vários usuários por empresa cliente**, com papéis distintos (`CLIENTE_ADMIN` /
+  `CLIENTE_ANALISTA`). Exige trocar a credencial de **CNPJ** para **email**, criar o vínculo
+  `usuario_cliente`, fluxo de convite e telas de gestão de equipe — nada disso existe no Figma.
+  No MVP vale **um login por empresa**.
+
 ### Removido do MVP em 15/09/2026 (estava na v1.0, não existe no design)
 - ❌ **Chat integrado** entre cliente e prestador (WebSocket)
 - ❌ **Contrato digital com assinatura eletrônica** — o aceite é o fluxo
@@ -436,16 +434,11 @@ O projeto será considerado **completo** quando:
 ## 9. Decisões Pendentes (TBD)
 
 ### Bloqueiam a modelagem do banco
-- [ ] ⚠️ **Login por CNPJ não funciona mais.** Com vários usuários por empresa, a credencial
-      precisa ser **email + senha**, e o CNPJ passa a ser atributo da *empresa*, não do login.
-      Isso muda as telas `/login` e `/client/profile/{uuid}` no Figma.
 - [ ] **Mecanismo de autorização**: enum `role` + `@PreAuthorize`, ou tabela de permissões
       configurável? *(adiado na Sessão 3 — "vamos verificar depois")*
-- [ ] **Fronteira `CLIENTE_ADMIN` × `CLIENTE_ANALISTA`** — quem compra crédito, quem publica
-      contrato, quem seleciona prestador (gasta), quem aprova NF, quem convida usuários.
 - [ ] **Fronteira `ADMIN` × `ANALISTA`** — o que o analista **não** pode fazer.
-- [ ] **Como um usuário entra numa empresa** — convite por email pelo `CLIENTE_ADMIN`?
-      Auto-cadastro informando o CNPJ + aprovação? Quem cria o primeiro `CLIENTE_ADMIN`?
+- [ ] **Campo de login em `/login`** — um único campo que aceita CNPJ, CPF ou email, ou o
+      usuário escolhe o tipo de credencial? O Figma tem uma tela de login só.
 - [ ] **Visibilidade de dados** — quem pode ver os documentos pessoais do prestador
       (RG/CNH, comprovantes). Dado sensível: LGPD.
 *(Nada mais bloqueia o ER além da matriz de permissões.)*
