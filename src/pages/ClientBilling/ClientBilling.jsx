@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
-import Sidebar from "@/components/Sidebar/Sidebar";
 
 // Mesmas classes de ClientProfile.jsx — a página ainda não extraiu um design
 // system compartilhado, então repetimos a convenção local por enquanto.
@@ -127,9 +126,7 @@ export default function ClientBilling() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-8 font-poppins md:flex-row md:items-start">
-      <Sidebar />
-
+    <div className="w-full font-poppins">
       <div className="w-full flex-1">
         <header className="mb-8">
           <h1 className="font-dm-sans text-4xl leading-tight font-bold text-(--color-heading) md:text-5xl md:leading-14">

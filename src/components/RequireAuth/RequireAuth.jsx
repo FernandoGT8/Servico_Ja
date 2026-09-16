@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/useAuth'
+import Sidebar from '@/components/Sidebar/Sidebar'
 import './RequireAuth.css'
 
 export default function RequireAuth({ allowedRoles }) {
@@ -50,5 +51,14 @@ export default function RequireAuth({ allowedRoles }) {
     )
   }
 
-  return <Outlet />
+  // Toda página logada tem a Sidebar — centralizada aqui em vez de repetida
+  // em cada página, então uma tela nova já nasce com ela.
+  return (
+    <div className="flex w-full flex-col gap-8 md:flex-row md:items-start">
+      <Sidebar />
+      <div className="w-full min-w-0 flex-1">
+        <Outlet />
+      </div>
+    </div>
+  )
 }
