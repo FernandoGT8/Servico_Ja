@@ -7,6 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Exceção: Figma.log é documentação do projeto, não log de execução
+!Figma.log
+
 node_modules
 dist
 dist-ssr
