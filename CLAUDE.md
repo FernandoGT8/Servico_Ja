@@ -64,11 +64,13 @@ Errar qualquer uma destas quebra o produto:
    Cliente novo começa em 25%. **Conta só o dia de trabalho efetivado**, rateado pelo mês em que
    o dia cai — folgas e faltas aprovadas não contam. A apuração é uma agregação sobre
    `dia_contrato`, que por isso é a base do cálculo de receita.
-7. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
+7. **Apuração fechada nunca é reaberta.** Falta aprovada tarde ajusta o **mês corrente**;
+   contratos que já congelaram o percentual não são recalculados.
+8. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
    **Empreitada** calcula o **valor/dia** (total ÷ dias).
-8. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
-9. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
-10. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
+9. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
+10. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
+11. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
 
 ---
 
@@ -132,10 +134,8 @@ modelagem, permissões e convenções.
 - **Herança vs Roles** — o design sustenta Roles/Permissions; a hierarquia de 5 classes da
   Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/`CompanyAdm`/`Provider`) não tem
   respaldo nas telas. Decisão pendente.
-- **Falta aprovada após o fechamento do mês** altera uma apuração já encerrada. Recomendação:
-  não reabrir a apuração; lançar o ajuste no mês corrente.
 
-Ver `@PRD.md` §9 para a lista completa.
+É a **única** pendência que ainda bloqueia o diagrama ER. Ver `@PRD.md` §9 para o resto.
 
 ---
 

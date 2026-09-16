@@ -111,6 +111,9 @@ Implicações:
   do cliente naquele mês. Por isso a tela de contrato exibe o percentual como um dado do
   contrato, não como um cálculo em tempo real.
 - **Cliente novo**, sem mês anterior apurado, entra na faixa inicial de **25%**.
+- **Apuração fechada não é reaberta.** Se uma falta de 25/09 só for aprovada em 03/10, setembro
+  permanece como foi fechado e o ajuste de dias entra no **mês corrente** (outubro). Contratos
+  que já congelaram o percentual não são recalculados. O desvio se corrige na apuração seguinte.
 
 ### 2.3 Requisitos mínimos do Prestador
 - **CNPJ ativo** (MEI)
@@ -409,13 +412,7 @@ O projeto será considerado **completo** quando:
       próprio Figma registra em "Regras de Negócio".)*
 - [ ] **Herança vs Roles** para usuários — o design sustenta Roles/Permissions; a hierarquia de
       5 classes da Sessão 1 não tem respaldo nas telas.
-- [ ] ⚠️ **Falta aprovada depois do fechamento do mês.** A apuração fecha em 30/09 com 240 dias
-      → taxa de outubro cai para 20%. Em 03/10 o cliente registra uma falta de 25/09 e o
-      prestador aprova: setembro teria tido 239 dias, e a faixa de outubro estaria errada — mas
-      os contratos de outubro já congelaram 20%.
-      **Recomendação**: a apuração fechada **não é reaberta**; o ajuste de dias entra no **mês
-      corrente**. É mais simples, auditável, e o erro se corrige sozinho no mês seguinte.
-      *Aguardando confirmação do Luiz.*
+*(Nada mais bloqueia o ER além da matriz de permissões.)*
 
 ### Regras a definir
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
