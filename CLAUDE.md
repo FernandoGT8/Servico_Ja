@@ -56,11 +56,15 @@ Errar qualquer uma destas quebra o produto:
 3. **Crédito é reservado na seleção do prestador**, não na publicação do contrato.
 4. **Taxa de serviço**: 25% (<240 dias/mês) · 20% (<600) · 15% (>600). Paga **só pelo Cliente**;
    o Prestador não paga nada.
-5. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
+5. **A taxa só é cobrada na aprovação da NF**, no mesmo evento em que o prestador é pago.
+6. **A faixa de taxa vale para o mês seguinte**, nunca retroativa: 240 dias agenciados em
+   setembro → taxa menor em outubro. `percentual_taxa` é **congelado no contrato** na publicação.
+   Cliente novo começa em 25%.
+7. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
    **Empreitada** calcula o **valor/dia** (total ÷ dias).
-6. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
-7. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
-8. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
+8. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
+9. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
+10. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
 
 ---
 
@@ -124,8 +128,10 @@ modelagem, permissões e convenções.
 - **Herança vs Roles** — o design sustenta Roles/Permissions; a hierarquia de 5 classes da
   Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/`CompanyAdm`/`Provider`) não tem
   respaldo nas telas. Decisão pendente.
-- **O crédito reservado inclui a taxa?**
-- **Apuração da faixa de taxa** — retroativa ao cruzar 240/600 dias, ou fixada na publicação?
+- **Quanto reservar na seleção** — a taxa só é cobrada na aprovação da NF, o que abre risco de
+  o cliente chegar lá sem saldo. Recomendação: reservar serviço + taxa em linhas separadas.
+- **O que conta como "dia agenciado"** na apuração mensal, e como tratar contrato que atravessa
+  o mês.
 
 Ver `@PRD.md` §9 para a lista completa.
 

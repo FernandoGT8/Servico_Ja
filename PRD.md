@@ -57,6 +57,17 @@ Cliente (empresa) → compra créditos → PLATAFORMA → repassa ao Prestador a
   selecionado** — não na publicação do contrato.
 - O **Prestador** recebe após a aprovação da Nota Fiscal. Não tem painel financeiro nem
   compra créditos.
+- A **taxa de serviço só é cobrada na aprovação da Nota Fiscal**, no mesmo evento em que o
+  prestador é pago. Antes disso a plataforma não retém nada.
+
+**Movimentações de crédito do Cliente**
+
+| Evento | Movimento |
+|---|---|
+| Compra de créditos | `saldo_disponivel` **+** valor comprado |
+| Seleção do prestador | `saldo_disponivel` → `saldo_reservado` (ver §9: quanto reservar) |
+| Aprovação da NF | `saldo_reservado` **−** valor do serviço → **Prestador** <br> `saldo_reservado` ou `saldo_disponivel` **−** valor da taxa → **Plataforma** |
+| Cancelamento | estorno para `saldo_disponivel` *(regras a definir — §9)* |
 
 ### 2.2 Taxa de serviço (receita da plataforma)
 
@@ -70,6 +81,20 @@ Escalonada pelo volume de **dias agenciados por mês**:
 | > 600 | **15%** |
 
 **Prestadores não pagam nada à plataforma.**
+
+#### Apuração da faixa — **mensal, com efeito no mês seguinte**
+A faixa **não muda retroativamente**. O volume de dias agenciados é apurado no fechamento do
+mês e a faixa resultante passa a valer **a partir do mês seguinte**.
+
+> Exemplo: o cliente agencia **240 dias em setembro** → a taxa dele **cai em outubro**.
+> Contratos de setembro permanecem na faixa vigente em setembro.
+
+Implicações:
+- É preciso uma **apuração mensal por cliente** (dias agenciados no mês → faixa do mês seguinte).
+- `percentual_taxa` é **congelado no contrato** no momento da publicação, usando a faixa vigente
+  do cliente naquele mês. Por isso a tela de contrato exibe o percentual como um dado do
+  contrato, não como um cálculo em tempo real.
+- **Cliente novo**, sem mês anterior apurado, entra na faixa inicial de **25%**.
 
 ### 2.3 Requisitos mínimos do Prestador
 - **CNPJ ativo** (MEI)
@@ -183,7 +208,8 @@ determinado pela **validação do CNPJ**.
 
 #### Visualização (`/client/contracts/{uuid}`)
 Tudo acima em leitura, **mais**:
-- [ ] Percentual e **valor da taxa de serviço** (= valor total × taxa)
+- [ ] Percentual e **valor da taxa de serviço** (= valor total × taxa). O percentual é
+      **congelado na publicação** conforme a faixa vigente do cliente (§2.2)
 - [ ] **Nota Fiscal emitida pelo prestador** (anexo) e **data de aprovação da NF**
 - [ ] **Candidaturas**: candidato · nível · hora da candidatura · selecionar →
       grava `Selecionado` + `Data de Seleção`
@@ -207,7 +233,7 @@ Tudo acima em leitura, **mais**:
 | 4 | **Em Execução** | Chega a data de início; controle de dias de trabalho/folga/falta |
 | 5 | **Concluído** | Fim do período de execução |
 | 6 | **NF Emitida** | Prestador anexa a Nota Fiscal |
-| 7 | **Pago** | Cliente aprova a NF → crédito reservado é liberado ao prestador |
+| 7 | **Pago** | Cliente aprova a NF → valor do serviço liberado ao prestador **e taxa cobrada do cliente no mesmo evento** |
 | 8 | **Cancelado** | Cancelamento (regras a definir — §9) |
 
 - [ ] Transições de estado com validação
@@ -307,8 +333,9 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 | `conta_credito` | saldo disponível e **saldo reservado** do cliente |
 | `transacao_credito` | extrato: compra, reserva, liberação, estorno |
 | `nota_fiscal` | anexo, data de emissão, data de aprovação |
+| `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados e **faixa vigente no mês seguinte** |
 
-**~16 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
+**~17 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
 de crédito.
 
 ---
@@ -366,11 +393,19 @@ O projeto será considerado **completo** quando:
       próprio Figma registra em "Regras de Negócio".)*
 - [ ] **Herança vs Roles** para usuários — o design sustenta Roles/Permissions; a hierarquia de
       5 classes da Sessão 1 não tem respaldo nas telas.
-- [ ] **O crédito reservado inclui a taxa?** O cliente reserva `valor do serviço` ou
-      `valor do serviço + taxa`? Muda o cálculo de saldo e o extrato.
-- [ ] **Apuração da faixa de taxa** — os "dias agenciados por mês" são apurados por cliente no
-      mês corrente? A faixa muda retroativamente ao cruzar 240/600 dias, ou vale a faixa no
-      momento da publicação do contrato?
+- [ ] ⚠️ **Quanto reservar na seleção?** Decidido: a **taxa só é cobrada na aprovação da NF**.
+      Isso resolve o *quando*, mas abre um risco de **inadimplência**: o cliente pode selecionar
+      um prestador tendo exatamente o valor do serviço em créditos e chegar na aprovação da NF
+      **sem saldo para a taxa**. A plataforma ficaria sem como cobrar.
+      **Recomendação**: reservar `valor do serviço + taxa` na seleção, em **duas linhas
+      separadas** do extrato (`RESERVA_SERVICO` e `RESERVA_TAXA`). O dinheiro continua só
+      *saindo* na aprovação da NF — o que preserva a regra decidida — mas fica garantido.
+      *Aguardando confirmação do Luiz.*
+- [ ] **O que conta como "dia agenciado"** na apuração mensal: dias de contratos **publicados**,
+      **selecionados**, **executados** ou **concluídos** no mês? E dias efetivamente trabalhados
+      (descontando faltas) ou dias contratados?
+- [ ] **Contrato que atravessa o mês** (ex.: 28/09 a 05/10): os dias contam para setembro,
+      outubro, ou são rateados?
 
 ### Regras a definir
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?

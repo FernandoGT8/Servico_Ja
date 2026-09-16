@@ -377,13 +377,26 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
     **Prestador aprova** a remoção do dia. → exige uma entidade de dia de contrato com estado e
     um passo de confirmação bilateral.
 
+### Regras financeiras (complemento)
+12. **Momento da cobrança da taxa**: a taxa de serviço **só é cobrada na aprovação da Nota
+    Fiscal**, no mesmo evento em que o prestador recebe. Antes disso a plataforma não retém nada.
+13. **Apuração da faixa de taxa**: **mensal, com efeito no mês seguinte** e **nunca retroativa**.
+    Ex.: 240 dias agenciados em setembro → a taxa cai em outubro. Logo, `percentual_taxa` é
+    **congelado no contrato** na publicação — coerente com a tela de contrato exibir o percentual
+    como dado armazenado. Cliente novo entra na faixa inicial de 25%.
+
 ### Próximos passos acordados
-12. **Completar o mapeamento** do Style Guide, Assets, App Corporate e App Provider mais tarde,
+14. **Completar o mapeamento** do Style Guide, Assets, App Corporate e App Provider mais tarde,
     após o reset do rate limit, usando `get_screenshot` (mais barato que `get_metadata`).
-13. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
+15. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
     organizar a base (modelagem, permissões, convenções).
 
 ### Ainda em aberto (bloqueia a modelagem)
+- **Quanto reservar na seleção** — a decisão 12 fixa *quando* a taxa é cobrada, mas o cliente
+  pode chegar na aprovação da NF sem saldo para pagá-la. Recomendação: reservar
+  `serviço + taxa` em duas linhas de extrato separadas (`RESERVA_SERVICO` / `RESERVA_TAXA`).
+- **Definição de "dia agenciado"** para a apuração mensal (publicado? executado? com ou sem
+  faltas?) e tratamento de contrato que atravessa o mês.
 - **Matriz de permissões por papel** — o que cada perfil pode ver e fazer. É a pendência que o
   próprio Figma registra e a única das 5 perguntas da Sessão 1 sem resposta.
 - **Herança vs Roles** para usuários: o design sustenta **Roles/Permissions**; falta o Luiz bater
