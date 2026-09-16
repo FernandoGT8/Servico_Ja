@@ -56,10 +56,14 @@ Errar qualquer uma destas quebra o produto:
 3. **Crédito é reservado na seleção do prestador**, não na publicação do contrato.
 4. **Taxa de serviço**: 25% (<240 dias/mês) · 20% (<600) · 15% (>600). Paga **só pelo Cliente**;
    o Prestador não paga nada.
-5. **A taxa só é cobrada na aprovação da NF**, no mesmo evento em que o prestador é pago.
+5. **A taxa só é cobrada na aprovação da NF**, no mesmo evento em que o prestador é pago —
+   mas na **seleção** reserva-se **serviço + taxa** (R$ 2.500 + 25% = R$ 3.125), em duas linhas
+   de extrato (`RESERVA_SERVICO` / `RESERVA_TAXA`). Selecionar exige saldo ≥ serviço + taxa.
 6. **A faixa de taxa vale para o mês seguinte**, nunca retroativa: 240 dias agenciados em
    setembro → taxa menor em outubro. `percentual_taxa` é **congelado no contrato** na publicação.
-   Cliente novo começa em 25%.
+   Cliente novo começa em 25%. **Conta só o dia de trabalho efetivado**, rateado pelo mês em que
+   o dia cai — folgas e faltas aprovadas não contam. A apuração é uma agregação sobre
+   `dia_contrato`, que por isso é a base do cálculo de receita.
 7. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
    **Empreitada** calcula o **valor/dia** (total ÷ dias).
 8. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
@@ -128,10 +132,8 @@ modelagem, permissões e convenções.
 - **Herança vs Roles** — o design sustenta Roles/Permissions; a hierarquia de 5 classes da
   Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/`CompanyAdm`/`Provider`) não tem
   respaldo nas telas. Decisão pendente.
-- **Quanto reservar na seleção** — a taxa só é cobrada na aprovação da NF, o que abre risco de
-  o cliente chegar lá sem saldo. Recomendação: reservar serviço + taxa em linhas separadas.
-- **O que conta como "dia agenciado"** na apuração mensal, e como tratar contrato que atravessa
-  o mês.
+- **Falta aprovada após o fechamento do mês** altera uma apuração já encerrada. Recomendação:
+  não reabrir a apuração; lançar o ajuste no mês corrente.
 
 Ver `@PRD.md` §9 para a lista completa.
 

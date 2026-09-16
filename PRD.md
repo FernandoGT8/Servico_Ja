@@ -59,14 +59,17 @@ Cliente (empresa) → compra créditos → PLATAFORMA → repassa ao Prestador a
   compra créditos.
 - A **taxa de serviço só é cobrada na aprovação da Nota Fiscal**, no mesmo evento em que o
   prestador é pago. Antes disso a plataforma não retém nada.
+- Na seleção, porém, é reservado **serviço + taxa**. Ex.: contrato de R$ 2.500 com taxa de 25%
+  reserva **R$ 3.125**. O dinheiro só *sai* na aprovação da NF; a reserva apenas garante que a
+  plataforma conseguirá cobrar a taxa. **Selecionar um prestador exige saldo ≥ serviço + taxa.**
 
 **Movimentações de crédito do Cliente**
 
 | Evento | Movimento |
 |---|---|
 | Compra de créditos | `saldo_disponivel` **+** valor comprado |
-| Seleção do prestador | `saldo_disponivel` → `saldo_reservado` (ver §9: quanto reservar) |
-| Aprovação da NF | `saldo_reservado` **−** valor do serviço → **Prestador** <br> `saldo_reservado` ou `saldo_disponivel` **−** valor da taxa → **Plataforma** |
+| Seleção do prestador | `saldo_disponivel` → `saldo_reservado`, **em duas linhas**: `RESERVA_SERVICO` (valor do serviço) + `RESERVA_TAXA` (valor da taxa) |
+| Aprovação da NF | `saldo_reservado` **−** `RESERVA_SERVICO` → **Prestador** <br> `saldo_reservado` **−** `RESERVA_TAXA` → **Plataforma** |
 | Cancelamento | estorno para `saldo_disponivel` *(regras a definir — §9)* |
 
 ### 2.2 Taxa de serviço (receita da plataforma)
@@ -88,6 +91,19 @@ mês e a faixa resultante passa a valer **a partir do mês seguinte**.
 
 > Exemplo: o cliente agencia **240 dias em setembro** → a taxa dele **cai em outubro**.
 > Contratos de setembro permanecem na faixa vigente em setembro.
+
+#### O que conta como "dia agenciado"
+**Somente dias efetivamente agenciados**, apurados **dia a dia**:
+- Conta o **dia de trabalho efetivado**. **Não** contam dias de folga nem **faltas aprovadas**
+  (contrato de 10 diárias com 2 faltas aprovadas conta **8**).
+- **Rateado por dia**: cada dia conta para o **mês em que ele cai**. Um contrato de 28/09 a
+  05/10 contribui com os dias de setembro para setembro e os de outubro para outubro.
+- Como a contagem é por dia e não por contrato, um **contrato ainda em execução** no fechamento
+  do mês contribui com os dias já trabalhados naquele mês.
+
+> Consequência de modelagem: a apuração é uma **agregação sobre `dia_contrato`** (tipo
+> `TRABALHO`, agrupado pela data). A tabela `dia_contrato` deixa de ser um detalhe da Diária e
+> vira a **base do cálculo de receita da plataforma**.
 
 Implicações:
 - É preciso uma **apuração mensal por cliente** (dias agenciados no mês → faixa do mês seguinte).
@@ -331,9 +347,9 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 | `dia_contrato` | cada dia: `TRABALHO` / `FOLGA` / `FALTA` + estado da aprovação da falta |
 | `candidatura` | candidatura do prestador ao contrato (+ seleção e data de seleção) |
 | `conta_credito` | saldo disponível e **saldo reservado** do cliente |
-| `transacao_credito` | extrato: compra, reserva, liberação, estorno |
+| `transacao_credito` | extrato: `COMPRA`, `RESERVA_SERVICO`, `RESERVA_TAXA`, `LIBERACAO_PRESTADOR`, `COBRANCA_TAXA`, `ESTORNO` |
 | `nota_fiscal` | anexo, data de emissão, data de aprovação |
-| `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados e **faixa vigente no mês seguinte** |
+| `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados (agregação de `dia_contrato`) e **faixa vigente no mês seguinte** |
 
 **~17 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
 de crédito.
@@ -393,19 +409,13 @@ O projeto será considerado **completo** quando:
       próprio Figma registra em "Regras de Negócio".)*
 - [ ] **Herança vs Roles** para usuários — o design sustenta Roles/Permissions; a hierarquia de
       5 classes da Sessão 1 não tem respaldo nas telas.
-- [ ] ⚠️ **Quanto reservar na seleção?** Decidido: a **taxa só é cobrada na aprovação da NF**.
-      Isso resolve o *quando*, mas abre um risco de **inadimplência**: o cliente pode selecionar
-      um prestador tendo exatamente o valor do serviço em créditos e chegar na aprovação da NF
-      **sem saldo para a taxa**. A plataforma ficaria sem como cobrar.
-      **Recomendação**: reservar `valor do serviço + taxa` na seleção, em **duas linhas
-      separadas** do extrato (`RESERVA_SERVICO` e `RESERVA_TAXA`). O dinheiro continua só
-      *saindo* na aprovação da NF — o que preserva a regra decidida — mas fica garantido.
+- [ ] ⚠️ **Falta aprovada depois do fechamento do mês.** A apuração fecha em 30/09 com 240 dias
+      → taxa de outubro cai para 20%. Em 03/10 o cliente registra uma falta de 25/09 e o
+      prestador aprova: setembro teria tido 239 dias, e a faixa de outubro estaria errada — mas
+      os contratos de outubro já congelaram 20%.
+      **Recomendação**: a apuração fechada **não é reaberta**; o ajuste de dias entra no **mês
+      corrente**. É mais simples, auditável, e o erro se corrige sozinho no mês seguinte.
       *Aguardando confirmação do Luiz.*
-- [ ] **O que conta como "dia agenciado"** na apuração mensal: dias de contratos **publicados**,
-      **selecionados**, **executados** ou **concluídos** no mês? E dias efetivamente trabalhados
-      (descontando faltas) ou dias contratados?
-- [ ] **Contrato que atravessa o mês** (ex.: 28/09 a 05/10): os dias contam para setembro,
-      outubro, ou são rateados?
 
 ### Regras a definir
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?

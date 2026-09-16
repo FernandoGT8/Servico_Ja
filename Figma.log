@@ -385,18 +385,25 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
     **congelado no contrato** na publicação — coerente com a tela de contrato exibir o percentual
     como dado armazenado. Cliente novo entra na faixa inicial de 25%.
 
+14. **Reserva na seleção**: reserva-se **serviço + taxa** (ex.: R$ 2.500 + 25% = **R$ 3.125**),
+    em **duas linhas de extrato** (`RESERVA_SERVICO` / `RESERVA_TAXA`). Isso preserva a decisão
+    12 (o dinheiro só *sai* na aprovação da NF) e elimina o risco de o cliente chegar lá sem
+    saldo para a taxa. **Selecionar um prestador exige saldo ≥ serviço + taxa.**
+15. **Definição de "dia agenciado"**: conta **somente o dia de trabalho efetivado**, **rateado
+    pelo mês em que o dia cai**. Folgas e faltas aprovadas **não contam** (10 diárias com 2
+    faltas = 8 dias). Contrato de 28/09 a 05/10 divide os dias entre os dois meses.
+    → A apuração é uma agregação sobre `dia_contrato`, que deixa de ser detalhe da Diária e vira
+    a **base do cálculo de receita da plataforma**.
+
 ### Próximos passos acordados
-14. **Completar o mapeamento** do Style Guide, Assets, App Corporate e App Provider mais tarde,
+16. **Completar o mapeamento** do Style Guide, Assets, App Corporate e App Provider mais tarde,
     após o reset do rate limit, usando `get_screenshot` (mais barato que `get_metadata`).
-15. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
+17. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
     organizar a base (modelagem, permissões, convenções).
 
 ### Ainda em aberto (bloqueia a modelagem)
-- **Quanto reservar na seleção** — a decisão 12 fixa *quando* a taxa é cobrada, mas o cliente
-  pode chegar na aprovação da NF sem saldo para pagá-la. Recomendação: reservar
-  `serviço + taxa` em duas linhas de extrato separadas (`RESERVA_SERVICO` / `RESERVA_TAXA`).
-- **Definição de "dia agenciado"** para a apuração mensal (publicado? executado? com ou sem
-  faltas?) e tratamento de contrato que atravessa o mês.
+- **Falta aprovada após o fechamento do mês** — altera uma apuração já encerrada e uma faixa já
+  aplicada. Recomendação: não reabrir a apuração; lançar o ajuste no mês corrente.
 - **Matriz de permissões por papel** — o que cada perfil pode ver e fazer. É a pendência que o
   próprio Figma registra e a única das 5 perguntas da Sessão 1 sem resposta.
 - **Herança vs Roles** para usuários: o design sustenta **Roles/Permissions**; falta o Luiz bater
