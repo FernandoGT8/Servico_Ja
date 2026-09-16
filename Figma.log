@@ -405,8 +405,32 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
 18. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
     organizar a base (modelagem, permissões, convenções).
 
-### Ainda em aberto (bloqueia a modelagem)
-- **Matriz de permissões por papel** — o que cada perfil pode ver e fazer. É a pendência que o
-  próprio Figma registra e a única das 5 perguntas da Sessão 1 sem resposta.
-- **Herança vs Roles** para usuários: o design sustenta **Roles/Permissions**; falta o Luiz bater
-  o martelo sobre abandonar a hierarquia de 5 classes da Sessão 1.
+---
+
+## 12. Sessão 3 (15/09/2026) — Matriz de permissões, rodada 1
+
+### Decidido
+19. **Uma empresa cliente tem vários logins, com papéis diferentes** (`CLIENTE_ADMIN` e
+    `CLIENTE_ANALISTA`).
+20. **Dois papéis internos da plataforma**: `ADMIN` e `ANALISTA`.
+21. **Status `Pendente` = navega, não transaciona**: faz login, vê mural e perfis, completa o
+    próprio cadastro; não publica contrato, não se candidata, não compra crédito.
+22. São **5 papéis** no total — o mesmo número da hierarquia da Sessão 1. O que muda é o
+    **mecanismo**: `role` numa única entidade `usuario`, não herança de 5 classes.
+
+### 🔴 Conflito que a decisão 19 cria com o design
+O Figma mostra o login da empresa por **CNPJ + senha** (`/login` e o bloco "Conta" de
+`/client/profile/{uuid}`). Isso só funciona com **um login por empresa**. Com vários usuários,
+dois funcionários da mesma empresa teriam a mesma credencial.
+→ **O login precisa passar a ser por email**, e o CNPJ vira atributo da empresa.
+→ **Telas afetadas no Figma**: `/login`, `/client/profile/{uuid}`.
+→ **Telas que faltam**: listar equipe, convidar usuário, definir papel.
+
+### Ainda em aberto
+- **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões
+  configurável? *(adiado: "vamos verificar depois")*
+- **Fronteira `CLIENTE_ADMIN` × `CLIENTE_ANALISTA`** — quem gasta dinheiro?
+- **Fronteira `ADMIN` × `ANALISTA`** — o que o analista não pode?
+- **Como um usuário entra numa empresa** e quem cria o primeiro `CLIENTE_ADMIN`
+- **Visibilidade de dados** — quem vê RG/CNH e comprovantes do prestador (LGPD)
+- **Ações por estado do contrato** — editar/cancelar em `Rascunho` ≠ em `Em Execução`

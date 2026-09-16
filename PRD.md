@@ -125,16 +125,23 @@ Implicações:
 
 ## 3. Perfis de Usuário
 
-### 3.1 Administrador / Operador
-- **Quem**: time de desenvolvimento e operação da plataforma
-- **Responsabilidades**: validar CNPJ de clientes e prestadores, liberar/bloquear acesso,
-  gerenciar tipos de serviço, cursos e habilidades, auditar transações de crédito
+### 3.1 Papéis internos da plataforma — **ADMIN** e **ANALISTA**
+- **Quem**: time de operação do Serviços Já!
+- **`ANALISTA`** — operacional: validar CNPJ, conferir documentos do prestador,
+  liberar/bloquear acesso
+- **`ADMIN`** — tudo do analista **mais**: gerenciar usuários internos, catálogos
+  (tipos de serviço, cursos, habilidades) e auditoria financeira
+- *(divisão exata de responsabilidades a fechar — §9)*
 - **Tela `/admin`**: ⏸️ **backlog** — será a tela inicial dos Administradores com dados da
   plataforma. Não há frame desenhado ainda.
 
-### 3.2 Cliente (Empresa Contratante)
+### 3.2 Cliente (Empresa Contratante) — **vários usuários por empresa**
 - **Quem**: empresas que precisam de mão de obra
-- **Identificação**: **CNPJ**
+- **Identificação da empresa**: **CNPJ**
+- ❗ **Uma empresa tem vários logins, com papéis diferentes**:
+  - **`CLIENTE_ADMIN`** — responsável pela empresa; movimenta dinheiro e gere a equipe
+  - **`CLIENTE_ANALISTA`** — opera contratos sem (ou com menos) poder financeiro
+  - *(a fronteira exata entre os dois está em aberto — §9)*
 - **Fluxo**: cadastro → validação de CNPJ → compra de créditos → publicação de contrato →
   seleção de prestador → acompanhamento da execução → aprovação da NF
 
@@ -144,14 +151,25 @@ Implicações:
 - **Fluxo**: cadastro → validação de CNPJ e documentos → consulta ao mural de oportunidades →
   candidatura → execução → emissão de NF → recebimento
 
-### 3.4 Controle de acesso
-Todo usuário tem um **status de acesso**: `Pendente` · `Liberado` · `Bloqueado`,
-determinado pela **validação do CNPJ**.
+### 3.4 Papéis (roles)
 
-> ⚠️ **Pendência de arquitetura**: a Sessão 1 propôs herança com 5 classes
-> (`SystemAnalyst`, `SystemAdm`, `CompanyAnalyst`, `CompanyAdm`, `Provider`). O design **não
-> sustenta essa separação** — existem apenas telas de Cliente e Prestador. A recomendação é
-> **Roles/Permissions** sobre uma única entidade `usuario`. Decisão pendente (§9).
+| Papel | Escopo | Quem é |
+|---|---|---|
+| `ADMIN` | plataforma | time Serviços Já! — acesso total |
+| `ANALISTA` | plataforma | time Serviços Já! — validação e liberação de acesso |
+| `CLIENTE_ADMIN` | uma empresa | responsável pela empresa contratante |
+| `CLIENTE_ANALISTA` | uma empresa | operador da empresa contratante |
+| `PRESTADOR` | ele mesmo | profissional individual |
+
+São **5 papéis** — o mesmo número da hierarquia proposta na Sessão 1. A diferença é o
+**mecanismo**: `role` em uma única entidade `usuario`, não herança de 5 classes.
+*(Mecanismo de autorização ainda não decidido — §9.)*
+
+### 3.5 Status de acesso
+Todo usuário tem `Pendente` · `Liberado` · `Bloqueado`, determinado pela **validação do CNPJ**.
+
+**`Pendente` = navega, mas não transaciona.** Pode fazer login, ver o mural e perfis e
+completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se nem comprar crédito.
 
 ---
 
@@ -159,6 +177,14 @@ determinado pela **validação do CNPJ**.
 
 ### 4.1 Autenticação e Cadastro
 - [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
+
+> ⚠️ **Conflito com o design.** O Figma mostra o login da empresa por **CNPJ + senha** e a tela
+> `/client/profile/{uuid}` traz "Conta: CNPJ · Senha" como credencial única. Isso pressupõe
+> **um login por empresa**. Com a decisão de **vários usuários por empresa**, o CNPJ deixa de
+> identificar uma pessoa: dois funcionários da mesma empresa teriam o mesmo CNPJ.
+> **O login precisa passar a ser por email.** Ver §9.
+
+- [ ] **Gestão de equipe da empresa** (convite/vínculo de usuários) — **não há tela no Figma**
 - [ ] Cadastro de Cliente B2B (`/register/client`)
 - [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
       de privacidade
@@ -336,7 +362,9 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 
 | Tabela | Conteúdo |
 |---|---|
-| `usuario` | credenciais, role, status de acesso, data de cadastro |
+| `usuario` | **email** (login), senha, `role`, status de acesso, data de cadastro |
+| `usuario_cliente` | vínculo N:1 entre usuário e empresa cliente *(ou FK `cliente_id` em `usuario`)* |
+| `convite` | convite de um `CLIENTE_ADMIN` a um novo usuário da sua empresa |
 | `cliente` | dados da empresa contratante (CNPJ, segmento, responsável, CNAE, endereço) |
 | `prestador` | dados do profissional (CPF, CNPJ MEI, endereço, aceite de termos) |
 | `documento` | anexos do prestador (RG/CNH, comprovantes de experiência) |
@@ -354,7 +382,7 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 | `nota_fiscal` | anexo, data de emissão, data de aprovação |
 | `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados (agregação de `dia_contrato`) e **faixa vigente no mês seguinte** |
 
-**~17 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
+**~19 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
 de crédito.
 
 ---
@@ -408,10 +436,18 @@ O projeto será considerado **completo** quando:
 ## 9. Decisões Pendentes (TBD)
 
 ### Bloqueiam a modelagem do banco
-- [ ] **Matriz de permissões por papel** — o que cada perfil vê e faz. *(É a pendência que o
-      próprio Figma registra em "Regras de Negócio".)*
-- [ ] **Herança vs Roles** para usuários — o design sustenta Roles/Permissions; a hierarquia de
-      5 classes da Sessão 1 não tem respaldo nas telas.
+- [ ] ⚠️ **Login por CNPJ não funciona mais.** Com vários usuários por empresa, a credencial
+      precisa ser **email + senha**, e o CNPJ passa a ser atributo da *empresa*, não do login.
+      Isso muda as telas `/login` e `/client/profile/{uuid}` no Figma.
+- [ ] **Mecanismo de autorização**: enum `role` + `@PreAuthorize`, ou tabela de permissões
+      configurável? *(adiado na Sessão 3 — "vamos verificar depois")*
+- [ ] **Fronteira `CLIENTE_ADMIN` × `CLIENTE_ANALISTA`** — quem compra crédito, quem publica
+      contrato, quem seleciona prestador (gasta), quem aprova NF, quem convida usuários.
+- [ ] **Fronteira `ADMIN` × `ANALISTA`** — o que o analista **não** pode fazer.
+- [ ] **Como um usuário entra numa empresa** — convite por email pelo `CLIENTE_ADMIN`?
+      Auto-cadastro informando o CNPJ + aprovação? Quem cria o primeiro `CLIENTE_ADMIN`?
+- [ ] **Visibilidade de dados** — quem pode ver os documentos pessoais do prestador
+      (RG/CNH, comprovantes). Dado sensível: LGPD.
 *(Nada mais bloqueia o ER além da matriz de permissões.)*
 
 ### Regras a definir

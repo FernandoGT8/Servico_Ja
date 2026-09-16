@@ -29,7 +29,10 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 **Frontend** (React+Vite) → **Backend** (Java+Spring, REST) → **Database** (PostgreSQL)
 
 - **Autenticação**: Spring Security + **JWT**, senhas em **BCrypt**
-- **Autorização**: por **Roles** (ver pendência abaixo)
+- **Autorização**: por **Roles**. 5 papéis: `ADMIN` · `ANALISTA` · `CLIENTE_ADMIN` ·
+  `CLIENTE_ANALISTA` · `PRESTADOR`. Mecanismo (enum vs tabela de permissões) a definir.
+- **Uma empresa cliente tem vários usuários**, com papéis diferentes → login por **email**,
+  não por CNPJ (conflito com o Figma, ver `@PRD.md` §9)
 - **Interfaces**: Site institucional · App do Cliente · App do Prestador · Admin (backlog)
 - **~16 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
 - **Testes**: JUnit 5 + Jest, **cobertura mínima de 70% — requisito de entrega**
@@ -130,10 +133,12 @@ modelagem, permissões e convenções.
 
 ## Pendências que Bloqueiam Implementação
 
-- **Matriz de permissões por papel** — não definida (o próprio Figma registra como pendente)
-- **Herança vs Roles** — o design sustenta Roles/Permissions; a hierarquia de 5 classes da
-  Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/`CompanyAdm`/`Provider`) não tem
-  respaldo nas telas. Decisão pendente.
+- **Login por CNPJ não funciona** com vários usuários por empresa — precisa ser email + senha.
+  Muda `/login` e `/client/profile/{uuid}` no Figma.
+- **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões?
+- **Fronteira entre os papéis** — `CLIENTE_ADMIN` × `CLIENTE_ANALISTA` e `ADMIN` × `ANALISTA`
+- **Como um usuário entra numa empresa** — convite? auto-cadastro por CNPJ? quem é o primeiro?
+- **Visibilidade dos documentos pessoais do prestador** (RG/CNH) — LGPD
 
 É a **única** pendência que ainda bloqueia o diagrama ER. Ver `@PRD.md` §9 para o resto.
 
