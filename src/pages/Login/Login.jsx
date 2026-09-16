@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/useAuth'
 import { login as loginRequest } from '@/services/authService'
+import { getHomeRoute } from '@/utils/roleRoutes'
 import './Login.css'
 
 export default function Login() {
@@ -22,9 +23,7 @@ export default function Login() {
       const data = await loginRequest({ email, senha: password })
       login(data)
       setLoading(false)
-      // Dashboard é a landing exclusiva de ADMIN/ANALISTA; os demais papéis
-      // ainda não têm um perfil real para onde redirecionar.
-      navigate(data.tipo === 'ADMIN' || data.tipo === 'ANALISTA' ? '/dashboard' : '/')
+      navigate(getHomeRoute(data.tipo, data.uuid))
     } catch (err) {
       setError(err.message || 'Erro ao conectar com o servidor. Tente novamente.')
       setLoading(false)

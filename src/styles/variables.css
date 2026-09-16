@@ -16,3 +16,31 @@
     --border-color: #334155;
   }
 }
+
+/* Paleta do design "Perfil e Painel do Cliente" (Figma). Fica fixa em light
+   mode por enquanto — o desenho não previu variante dark, então não criamos
+   uma para não inventar cores. Consumida via Tailwind com sintaxe de valor
+   arbitrário, ex.: text-[color:var(--color-heading)]. */
+:root {
+  --color-heading: #23262f;
+  --color-muted: #777e91;
+  --color-muted-light: #b1b5c4;
+  --color-border-subtle: #e6e8ec;
+  --color-accent: #4c6fff;
+  --color-accent-bg: #e1e8ff;
+  --bg-subtle: #f4f5f6;
+  --bg-card: #fcfcfd;
+  --color-danger: #f16063;
+  --color-danger-bg: #ffe6e4;
+  --color-success: #66cb9f;
+}
+
+/* Fontes do mesmo design "Perfil e Painel do Cliente" (Figma): Poppins para
+   rótulos/corpo, DM Sans para títulos e botões, Work Sans para o texto dos
+   radios de método de pagamento. Em @theme (não em :root) para o Tailwind
+   gerar as utilities font-poppins / font-dm-sans / font-work-sans. */
+@theme {
+  --font-poppins: 'Poppins', sans-serif;
+  --font-dm-sans: 'DM Sans', sans-serif;
+  --font-work-sans: 'Work Sans', sans-serif;
+}
