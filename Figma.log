@@ -1,0 +1,465 @@
+# Figma.log — Mapeamento do Design (Serviços Já!)
+
+**Arquivo Figma**: `ONnLf1dmAXa8SsZfIzYd4p` (ServicosJa)
+**Data do mapeamento**: 15/09/2026
+**Última atualização**: 15/09/2026 — decisões da Sessão 2 incorporadas (ver §11)
+**Método**: Figma MCP (`get_metadata`) — leitura estrutural de nós, nomes de camadas e conteúdo de texto.
+
+> **O Figma é o protótipo, não um contrato.** Decisão de 15/09/2026: o desenho é o esqueleto
+> que orientou o levantamento das regras; o código pode divergir dele. A fonte de verdade do
+> projeto é o `PRD.md`. Este arquivo continua valendo como **mapeamento do design e histórico
+> das decisões** — inclusive das que contrariam o desenho.
+>
+> ATENÇÃO — cobertura parcial. O plano Starter do Figma MCP impôs rate limit no meio do
+> mapeamento. Ver seção 7 (Lacunas) para o que ficou de fora.
+
+---
+
+## 1. Estrutura do documento
+
+O `get_metadata` sem nodeId lista **apenas uma página de topo: `4:2 — Overview`**.
+As demais páginas só são acessíveis via node-id direto (vindas dos links compartilhados):
+
+| Página | node-id | Status do mapeamento |
+|---|---|---|
+| Overview | `4:2` | ✅ mapeada por completo |
+| Style Guide | `0:1` | ❌ timeout (349s) — nó grande demais |
+| Assets | `4:637` | ❌ não mapeada (rate limit) |
+| Website | `4:3` | ⚠️ frames de topo apenas |
+| App Operator | `4:1630` | ✅ mapeada (504k chars, extraída por script) |
+| App Corporate | `4:6338` | ❌ não mapeada (rate limit) |
+| App Provider | `5:6576` | ❌ não mapeada (rate limit) |
+
+---
+
+## 2. Página Overview — Regras de negócio (transcrição literal do Figma)
+
+### 2.1 Visão Geral do Projeto (nó `4:82`)
+> SERVIÇOS JÁ!® é uma plataforma B2B de locação e intermediação de mão de obra e serviços
+> qualificados. A plataforma se diferencia no mercado ao focar exclusivamente no modelo B2B
+> (Empresas Contratantes conectadas a Profissionais Prestadores de Serviços), eliminando a
+> informalidade e a burocracia do modelo B2C tradicional.
+
+### 2.2 Regras de Negócio (nó `4:75`) — **NÚCLEO DO MODELO, não está no PRD.md**
+> SERVIÇOS JÁ!® é uma plataforma B2B de **Agenciamento de mão de obra** (construção civil,
+> facilities, etc) em que **Empresas Grandes colocam créditos na Plataforma** e com esses
+> créditos disponibilizam os contratos para os prestadores.
+>
+> As Empresas parceiras pagam um **PERCENTUAL do valor total de cada contrato** agenciado,
+> seguindo uma tabela de dias agenciados por mês:
+> - **25%** se < 240 dias/mês
+> - **20%** se < 600 dias/mês
+> - **15%** se > 600 dias/mês
+>
+> **Prestadores Autônomos não pagam nada** para a Plataforma, apenas precisam se adequar aos
+> requisitos mínimos exigidos (**CNPJ ativo, experiência prévia?, documentação completa**).
+> Não precisam ter maquinário ou ferramentas, **oferecem somente a mão de obra**.
+
+### 2.3 Stack declarada no Figma (nó `4:85`)
+- Front-end: **ReactJS**
+- Back-end: **Spring Boot** (API RESTful, arquitetura em camadas)
+- Banco: **PostgreSQL / MySQL** (modelagem relacional normalizada)
+- Segurança: **Spring Security + JWT**, senhas com **BCrypt**, acesso por **Roles**
+- Testes: **JUnit 5 / Jest** — **cobertura mínima obrigatória de 70% antes da entrega**
+- Versionamento: Git/GitHub, repositório público, branch por funcionalidade
+
+### 2.4 Metodologia (nó `4:88`)
+Kanban/Sprints · TDD com meta de 70% · README.md com diagramas da arquitetura RESTful e
+decisões de design · Demonstração ao vivo com defesa de código para banca examinadora.
+
+### 2.5 Pendências marcadas no próprio Figma (nó `4:78`)
+- [ ] Construir fluxograma do funcionamento
+- [ ] Mapear ações de cada tipo de usuário
+- [ ] Mapear permissões e restrições
+
+---
+
+## 3. Checklist de telas (Overview, nós `4:6`–`4:68`)
+
+### Telas do Website (3 — todas marcadas como prontas)
+- `/` — Home (inclui subseções About e Details)
+- `/business` — Página Business (Empresas)
+- `/partners` — Página Partners (Prestadores MEI)
+
+### Telas da Aplicação (10 — 9 marcadas, `/admin` sem check)
+- `/login` — Tela de Login (Spring Security JWT)
+- `/register/client` — Cadastro de Cliente B2B
+- `/register/provider` — Cadastro de Prestador
+- `/client/contracts/new` — Criação de Contrato B2B (Cliente)
+- `/client/contracts/{uuid}` — Tela do Contrato B2B (Cliente/Prestadores)
+- `/provider/opportunities` — Mural de Contratos Disponíveis (Prestador)
+- `/client/profile/{uuid}` — Perfil e Painel do Cliente
+- `/client/profile/{uuid}/billing` — Painel de Créditos
+- `/provider/profile/{uuid}` — Perfil e Painel do Prestador
+- `/admin` — Painel Administrativo ← **não tem frame desenhado em nenhuma página**
+
+---
+
+## 4. Página Website (`4:3`) — 6 frames
+
+Padrão: cada rota tem versão **Desktop 1440px** e versão **Mobile 375px**.
+
+| Frame | node-id | Dimensões |
+|---|---|---|
+| `/` — Home DESKTOP (inclui About e Details) | `4:1483` | 1440 × 2048 |
+| Home-M | `4:1479` | 375 × 3096 |
+| `/partners` DESKTOP — Prestadores MEI | `4:1477` | 1440 × 2048 |
+| Partners-M | `4:1475` | 375 × 3096 |
+| `/business` DESKTOP — Empresas | `4:1473` | 1440 × 2048 |
+| Business-M | `4:1471` | 375 × 3096 |
+
+Componentes de navegação: `NavWebD` (desktop, 1440×93) e `NavWebM` (mobile, 375×112) +
+`SidWebM` (drawer mobile, 375×493).
+Conteúdo interno das seções **não foi lido** (rate limit).
+
+---
+
+## 5. Página App Operator (`4:1630`) — visão master, 19 frames
+
+É a página mais completa: contém **todas** as telas da aplicação, desktop + mobile.
+Breakpoints: **Desktop 1440px** / **Mobile 375px**.
+Componentes de chrome: `NavAppD`, `NavAppM`, `SidAppD-ADM` (sidebar), `FooterAppM`.
+
+| Tela (desktop) | node-id | Altura | Mobile | node-id |
+|---|---|---|---|---|
+| `/register/client` — Cadastro Cliente B2B | `5:11347` | 2607 | Cad-Cliente-M | `5:10922` |
+| `/register/provider` — Cadastro Prestador | `5:10362` | 3136 | Cad-Prestador-M | `5:9812` |
+| `/login` | `5:9694` | 1000 | Login-M | `5:9628` |
+| `/client/contracts/new` — Criação de Contrato | `5:9447` | 1943 | Contracts-Create-M | `5:9270` |
+| `/provider/opportunities` — Mural | `5:9008` | 1490 | Contracts-View-M | `5:8860` |
+| `/client/contracts/{uuid}` — Visualização | `5:8527` | 2550 | Contracts-Details-M | `5:8222` |
+| `/client/profile/{uuid}` — Painel Cliente | `5:7996` | 2461 | Client-Profile-M | `5:7786` |
+| `/provider/profile/{uuid}` — Painel Prestador | `5:7469` | 2546 | Provider-Profile-M | `5:7160` |
+| `/client/profile/{uuid}/billing` — Créditos | `5:7062` | 1237 | Provider-Billing-M | `5:6966` |
+
+Há ainda um frame `OPERATOR` (`5:11787`, 943×250) com o texto "USERS - OPERATOR →" —
+aparentemente um cabeçalho/índice da página, não uma tela.
+
+### 5.1 `/client/contracts/new` — Criação de Contrato (campos reais)
+
+**Cabeçalho**: "Lançar novo contrato"
+- **Tipo de contrato**: `Diária` | `Empreitada` (radio)
+- **ID do contrato**: *ID sequencial — autogerado*
+- **Status**: `Rascunho` — *"alterado conforme o fluxo"*
+
+**Bloco "Tipo de serviço"**: Lista de tipos de serviço (dropdown)
+**Bloco "Localização"**: Cidade (dropdown) + Estado (dropdown)
+
+**Bloco "Financeiro"**:
+- Data de Início (ex.: 15/08/2026 07:00)
+- Data de Encerramento (ex.: 22/08/2026 17:00)
+- Valor Total do Serviço — *"R$ XXXX,00 — calcular se diária"*
+- Valor por Dia — *"R$ XXXX,00 — calcular se empreitada"*
+
+> ✅ **Confirmado (não é inversão).** O campo calculado é sempre o que falta:
+> - **Diária**: cliente informa nº de diárias + valor/dia → sistema calcula o **total**.
+>   Ex.: 10 diárias × R$ 250/dia = R$ 2.500,00.
+> - **Empreitada**: cliente informa valor total + período → sistema calcula o **valor/dia**.
+>   Ex.: R$ 3.000,00 em 10 dias = R$ 300,00/dia.
+
+**Bloco "Operação"**:
+- Dias de trabalho (ex.: 15/08, 17/08, 18/08, 19/08)
+- Dias de folga (ex.: 16/08)
+- Dias de falta — *"Disponível somente se diária"*
+- Pernoite em casa? (Sim/Não)
+- Pernoite em alojamento? (Sim/Não)
+- Transporte fornecido pela empresa? (Sim/Não)
+- Ferramentas fornecidas pela empresa? (Sim/Não)
+- EPI's fornecidos pela empresa? (Sim/Não)
+- Área de alimentação disponível? (Sim/Não)
+- Cursos exigidos — lista/menu de seleção (ex. no mock: NR-35, NR-20, Primeiros Socorros)
+- Habilidades desejadas — lista/menu de seleção
+
+**Bloco "Descrição do Serviço"**: texto longo. O mock traz um exemplo real e completo
+(assentamento de pisos/azulejos) estruturado em: *o que o prestador deve fornecer ·
+tarefas e responsabilidades · proibições · regras de aceite e pagamento*.
+→ Sugere que a descrição pode virar um **template estruturado**, não um textarea livre.
+
+### 5.2 `/client/contracts/{uuid}` — Visualização do Contrato
+
+Tudo do item 5.1 em modo leitura, **mais**:
+- **Status**: `Aguardando Prestadores` — *"alterado conforme o fluxo"*
+- **Percentual de Taxa de Serviço**: `XX%`
+- **Valor da Taxa de Serviço**: *"R$ XXXX,00 — calcular = total do serviço × taxa"*
+- **Nota Fiscal Emitida pelo Prestador**: anexo de arquivo
+- **Aprovação da Nota Fiscal**: data/hora
+- **Bloco "Candidaturas"**: tabela com colunas
+  `Candidatos | Nível | Candidatura (hora da proposta) | Selecionar`
+  → registra `Selecionado` + `Data de Seleção`
+  ✅ **1 contrato : 1 prestador.** Várias candidaturas, uma única seleção.
+  ✅ **"Nível"** = reputação acumulada ao longo dos contratos → **backlog**, não entra no MVP.
+
+### 5.3 `/provider/opportunities` — Mural de Contratos Disponíveis
+
+Listagem em cards. Filtros visíveis: **Tipo de contrato** (Diária/Empreitada), **Tipo de
+Serviço**, campo **Promocode** (✅ = cupom de R$ X em créditos para novos clientes testarem a
+plataforma → **backlog**, não entra no MVP). Cada card: Logo da Empresa, Contrato ID, Tipo, Descrição,
+contador (`Button/Medium/Counter`). Textos restantes ainda são placeholder (lorem).
+
+### 5.4 `/client/profile/{uuid}` — Perfil e Painel do Cliente
+
+- **Conta**: ID do Cliente (sequencial autogerado) · CNPJ · Senha ·
+  **Acesso ao Sistema**: `Pendente / Liberado / Bloqueado` — *"validar pelo CNPJ"*
+- **Foto do Perfil**: upload
+- **Dados Gerais**: Nome da Empresa · Segmento de Atuação · **Tipos de Profissional de
+  interesse** · Responsável · Telefone · Email corporativo · Data do cadastro
+- **Documentação**: **Status do CNPJ** (`ATIVO / INAPTO / BAIXADO`) · Razão Social ·
+  Endereço · Cidade · Estado · **Atividade Principal (CNAE)** · Descrição da Atividade ·
+  **Atividades Secundárias**
+- **Financeiro**: Créditos disponíveis (R$) · **Taxa de Serviço `25/20/15%`** (corrigido no Figma)
+- **Contratos**: tabela `Candidatos | Nível | Candidatura | Selecionar`
+- **Sobre**: biografia da empresa
+
+### 5.5 `/provider/profile/{uuid}` — Perfil e Painel do Prestador
+
+- **Conta**: ID do Prestador (sequencial autogerado) · **CPF** · Senha ·
+  **Acesso ao Sistema**: `Pendente / Liberado / Bloqueado` — *"validar pelo CNPJ"*
+- **Foto do Perfil**: upload
+- **Dados Gerais**: Nome Completo · Email · Telefone · Endereço · Cidade · Estado ·
+  **Aceitou termos de uso?** (Sim/Não) · **Já tem CNPJ?** · Data do cadastro
+- **Documentação**: **CNPJ** · **Status do CNPJ** (`ATIVO/INAPTO/BAIXADO`) · Razão Social ·
+  **Atividade Principal (CNAE)** · Descrição · Atividades Secundárias ·
+  **Documento de Identificação** (anexar RG ou CNH) ·
+  **Documentos de Experiência** (anexar arquivos)
+- **Habilidades**: Áreas de Atuação · **Nível de conhecimento na área** ·
+  **Já atuou como terceirizado?**
+- **Contratos**: mesma tabela de candidaturas
+- **Sobre**: biografia do prestador
+
+→ O prestador é **pessoa física com CPF + CNPJ (MEI)**, não uma empresa prestadora.
+
+### 5.6 `/client/profile/{uuid}/billing` — Painel de Créditos
+
+Título da tela: **"Meus Créditos"**
+- **Créditos Atuais**: `R$ XXXXXX.00`
+- **Acesso ao Sistema**: Pendente/Liberado/Bloqueado — validar pelo CNPJ
+- Razão Social · CNPJ · **Email para comprovante** · Telefone
+- **Método Preferencial de pagamento**: `Boleto` | `Cartão de Crédito`
+- **Data da última compra**
+- **Histórico de Créditos** (tabela)
+- **Adicionar Créditos** → Valor total `R$ XXXXXXXX.00`
+
+✅ **Resolvido.** Era erro de nomenclatura no Figma (já corrigido no arquivo). **Somente o
+Cliente tem painel financeiro.** O Prestador não compra nem administra créditos — apenas
+recebe o valor após a conclusão do contrato.
+
+### 5.7 `/login`, `/register/client`, `/register/provider`
+
+Layout split: `aside` (imagem/color fill) + `main` com `form`.
+Componentes: `form-login/default`, `form-title/default`, `input/large`, `form-help-text`,
+`Forms/Radio button`, `Forms/Checkbox`.
+Login tem "**ou use sua conta vinculada**" + `logo social` → **login social previsto**.
+Cadastro do prestador tem aceite: *"Eu aceito os termos de uso do aplicativo e estou de
+acordo com a política de privacidade."*
+
+⚠️ Os campos dos 3 formulários ainda estão como **placeholder genérico** ("form title",
+"Text", "Lorem ipsum…"). **Não é possível extrair a lista de campos do cadastro pelo Figma** —
+ela precisa ser inferida dos painéis de perfil (5.4 e 5.5) ou definida por você.
+
+---
+
+## 6. Design System — inventário parcial
+
+Instâncias de componentes identificadas na página App Operator:
+
+| Componente | Uso |
+|---|---|
+| `NavWebD` / `NavWebM` | navbar do site institucional (desktop/mobile) |
+| `SidWebM` | drawer mobile do site |
+| `NavAppD` / `NavAppM` | navbar da aplicação |
+| `SidAppD-ADM` | sidebar da aplicação (desktop) |
+| `FooterAppM` | rodapé mobile da aplicação |
+| `Forms/Input/Placeholder with right icon`, `input/large` | inputs |
+| `Forms/Checkbox/Checked`, `Forms/Radio button/{Checked,Default}` | seleção |
+| `Button/Medium/Counter`, `button` | botões |
+| `form-login/default`, `form-title/default`, `form-help-text` | blocos de formulário |
+| Ícones | Ionicons (`attach-outline`, `checkmark-circle-outline`, `arrow-back-outline`, `briefcase-outline`), Ant Design, Bootstrap Icons (`caret-down-fill`, `dash-circle-fill`) |
+
+⚠️ O conteúdo interno dos componentes está na página **Assets** (`4:637`), que não foi lida.
+Tokens de cor/tipografia estão no **Style Guide** (`0:1`), que também não foi lido.
+
+---
+
+## 7. Lacunas deste mapeamento
+
+1. **Style Guide (`0:1`)** — timeout. Sem tokens de cor, tipografia, espaçamento, sombras.
+2. **Assets (`4:637`)** — rate limit. Sem estrutura interna de Nav/Sidebar/Footer/inputs, e
+   sem os itens de menu (não dá para saber a navegação da aplicação).
+3. **App Corporate (`4:6338`)** e **App Provider (`5:6576`)** — rate limit. Presumo que sejam
+   recortes por papel das mesmas telas do App Operator, mas **isso não está verificado**.
+4. **Conteúdo interno das páginas do Website** — só os frames de topo foram lidos.
+5. **`/admin`** — está no checklist, mas não existe frame desenhado em nenhuma página lida.
+
+Para completar: rodar novamente após o reset do rate limit, ou usar `get_screenshot`
+(mais barato em contexto) nas páginas faltantes.
+
+---
+
+## 8. Figma × PRD.md — conflitos RESOLVIDOS
+
+O Figma e a versão 1.0 do `PRD.md` descreviam dois produtos diferentes. Em **15/09/2026** o
+Luiz decidiu: **o Figma é a fonte de verdade do modelo de negócio** e o PRD foi reescrito
+(v2.0) para refletir o design. Registro do que foi resolvido:
+
+| Tema | PRD v1.0 dizia | Figma diz | Decisão (15/09/2026) |
+|---|---|---|---|
+| **Modelo de negócio** | Marketplace de propostas (RFQ → negociação) | Agenciamento por créditos pré-pagos + candidatura | ✅ **vale o Figma** |
+| **Pagamento** | TBD: pré, pós ou escrow | Cliente compra créditos; valor é reservado na seleção | ✅ **crédito pré-pago com reserva** |
+| **Receita** | não mencionada | Taxa escalonada 25/20/15% por dias/mês | ✅ **entra no PRD** |
+| **Chat WebSocket** | MVP obrigatório | não existe | ❌ **fora do escopo v1** |
+| **Assinatura digital** | MVP obrigatório | não existe; há anexo/aprovação de NF | ❌ **fora do escopo v1** — o aceite é o fluxo candidatura → seleção; a NF é o comprovante |
+| **Avaliação bilateral** | MVP obrigatório | não existe | ❌ **fora do escopo v1** → vira o "Nível" (reputação) no backlog |
+| **Disputas e multas** | MVP obrigatório | não existem | ❌ **fora do escopo v1** |
+| **Ciclo de vida** | 9 estados genéricos | Rascunho → Aguardando Prestadores → … → NF aprovada | ✅ **vale o Figma** |
+| **Prestador** | "empresa prestadora", CPF ou CNPJ | PF com CPF + CNPJ (MEI) | ✅ **somente prestadores individuais** — sem empresa com funcionários |
+| **Busca com filtros** | preço, região, rating, disponibilidade | tipo de contrato + tipo de serviço (+ promocode) | ✅ **vale o Figma** (escopo menor) |
+| **Diária vs Empreitada** | conceito inexistente | central ao produto | ✅ **entra no PRD** |
+| **Banco** | PostgreSQL | "PostgreSQL / MySQL" | ✅ **PostgreSQL** |
+| **Cobertura de testes** | não mencionada | 70% obrigatório | ✅ **entra no PRD** (requisito de curso) |
+| **Domínio** | genérico | construção civil / facilities | ✅ **construção civil / facilities** |
+| **Taxa de serviço** | — | 25/20/15% vs 30/25/20% (conflito interno) | ✅ **25/20/15%** — Regras de Negócio prevalece; Figma corrigido |
+| **`/admin`** | painel completo no MVP | sem frame desenhado | ⏸️ **backlog** — será tela inicial dos Administradores com dados da plataforma |
+
+## 9. Estado do código vs. design
+
+Código atual (`src/`): `Header`, `Footer`, `Login`, `SignUp`, `AdminForm`, `Dashboard`,
+`ProtectedPage` — navegação por `useState` + `localStorage`, **sem `react-router`** (embora
+`react-router-dom@7` esteja instalado). CSS puro por componente; **Tailwind instalado mas não
+usado**. Backend esperado em `http://localhost:8080/api/usuarios/{login,registrar}`.
+
+Distância até o design: **~19 frames desenhados vs. ~4 telas implementadas**, e nenhuma das
+telas implementadas corresponde a uma rota do Figma (`/`, `/business`, `/partners`,
+`/register/client`, `/register/provider`, `/client/*`, `/provider/*`, `/admin`).
+
+---
+
+## 10. O que o Figma responde das 5 perguntas críticas da Sessão 1
+
+1. **Tipos de usuário — herança ou roles?**
+   O design mostra só **2 perfis com telas próprias** (Cliente e Prestador) + Operator (master).
+   Não há nenhuma tela que diferencie `CompanyAnalyst` de `CompanyAdm`, nem `SystemAnalyst` de
+   `SystemAdm`. → **Indício forte de Roles/Permissions, não de herança de 5 classes.**
+2. **Fluxo do serviço**: Cliente compra créditos → cria contrato (`Rascunho`) → publica
+   (`Aguardando Prestadores`) → prestadores se **candidatam** no mural → cliente **seleciona**
+   (grava Selecionado + Data de Seleção) → execução com controle de dias
+   (trabalho/folga/falta) → prestador **emite NF** → cliente **aprova NF** → pagamento.
+   **Não há chat, proposta com contraoferta, assinatura nem avaliação nesse fluxo.**
+3. **Pagamento**: **Empresa → Plataforma (créditos) → Prestador**. A plataforma retém o
+   percentual. Fluxo custodiado, não direto.
+4. **DailyContract vs FullContract** = **Diária vs Empreitada**. A diária tem controle de
+   dias de falta e valor por dia; a empreitada tem valor fechado.
+5. **Permissões por tipo**: continua **sem resposta** — é exatamente o item que o próprio
+   Figma marca como pendente em "Regras de Negócio" (§2.5). **Próximo bloqueio a resolver.**
+
+---
+
+## 11. Decisões da Sessão 2 (15/09/2026)
+
+Respostas do Luiz que fecham as pendências levantadas no mapeamento:
+
+### Contradições do Figma — todas resolvidas
+1. **Taxa de serviço** = **25 / 20 / 15%** (a aba "Regras de Negócio" prevalece). Já corrigido no Figma.
+2. **Cálculo de valor** — não havia inversão. O sistema calcula sempre o campo que falta (ver §5.1).
+3. **Painel financeiro** — exclusivo do **Cliente**. Já corrigido no Figma.
+
+### Escopo
+4. **Chat, assinatura digital, avaliação bilateral, disputas e multas**: **fora do escopo v1**.
+   O `PRD.md` foi corrigido (v2.0) em vez de se desenhar ~8 telas novas.
+5. **Prestador**: **somente prestadores individuais** (PF com CPF + CNPJ MEI). Não há prestador
+   pessoa jurídica com funcionários.
+6. **`/admin`**: **backlog**. Seria a tela inicial dos Administradores com dados da plataforma.
+
+### Regras de negócio
+7. **Créditos**: o valor fica **reservado nos créditos do Cliente no momento em que o prestador é
+   selecionado** — não na publicação do contrato.
+8. **Cardinalidade**: **1 contrato : 1 prestador**. O contrato aceita várias candidaturas, mas
+   apenas uma seleção.
+9. **"Nível" do prestador**: **backlog**. Virá de **reputação acumulada** ao longo dos contratos
+   executados na plataforma.
+10. **Promocode**: **backlog**. Cupom de **R$ X em créditos para novos clientes** testarem a
+    plataforma (não é desconto de taxa nem convite privado).
+11. **Dias de falta (Diária)**: **descontam do valor**. O **Cliente registra** a falta e o
+    **Prestador aprova** a remoção do dia. → exige uma entidade de dia de contrato com estado e
+    um passo de confirmação bilateral.
+
+### Regras financeiras (complemento)
+12. **Momento da cobrança da taxa**: a taxa de serviço **só é cobrada na aprovação da Nota
+    Fiscal**, no mesmo evento em que o prestador recebe. Antes disso a plataforma não retém nada.
+13. **Apuração da faixa de taxa**: **mensal, com efeito no mês seguinte** e **nunca retroativa**.
+    Ex.: 240 dias agenciados em setembro → a taxa cai em outubro. Logo, `percentual_taxa` é
+    **congelado no contrato** na publicação — coerente com a tela de contrato exibir o percentual
+    como dado armazenado. Cliente novo entra na faixa inicial de 25%.
+
+14. **Reserva na seleção**: reserva-se **serviço + taxa** (ex.: R$ 2.500 + 25% = **R$ 3.125**),
+    em **duas linhas de extrato** (`RESERVA_SERVICO` / `RESERVA_TAXA`). Isso preserva a decisão
+    12 (o dinheiro só *sai* na aprovação da NF) e elimina o risco de o cliente chegar lá sem
+    saldo para a taxa. **Selecionar um prestador exige saldo ≥ serviço + taxa.**
+15. **Definição de "dia agenciado"**: conta **somente o dia de trabalho efetivado**, **rateado
+    pelo mês em que o dia cai**. Folgas e faltas aprovadas **não contam** (10 diárias com 2
+    faltas = 8 dias). Contrato de 28/09 a 05/10 divide os dias entre os dois meses.
+    → A apuração é uma agregação sobre `dia_contrato`, que deixa de ser detalhe da Diária e vira
+    a **base do cálculo de receita da plataforma**.
+
+16. **Apuração fechada não é reaberta**: falta aprovada depois do fechamento do mês lança o
+    ajuste no **mês corrente**. Contratos que já congelaram o percentual não são recalculados —
+    o desvio se corrige sozinho na apuração seguinte.
+
+### Próximos passos acordados
+17. **Completar o mapeamento** do Style Guide, Assets, App Corporate e App Provider mais tarde,
+    após o reset do rate limit, usando `get_screenshot` (mais barato que `get_metadata`).
+18. **Migrar a navegação para `react-router`** com as rotas reais do Figma — mas **só depois** de
+    organizar a base (modelagem, permissões, convenções).
+
+---
+
+## 12. Sessão 3 (15/09/2026) — Matriz de permissões, rodada 1
+
+### Decidido
+19. **Um login por empresa cliente**, com credencial **CNPJ + senha** — exatamente como o Figma
+    desenhou. Vários usuários por empresa com login por **email** e papéis distintos
+    (`CLIENTE_ADMIN` / `CLIENTE_ANALISTA`) vão para o **backlog**.
+20. **Dois papéis internos da plataforma**: `ADMIN` e `ANALISTA`.
+21. **Status `Pendente` = navega, não transaciona**: faz login, vê mural e perfis, completa o
+    próprio cadastro; não publica contrato, não se candidata, não compra crédito.
+22. **4 papéis no MVP**: `ADMIN` · `ANALISTA` · `CLIENTE` · `PRESTADOR`, por `role` numa única
+    entidade `usuario` — não herança de 5 classes.
+
+> **Histórico**: na primeira rodada a decisão foi "vários logins por empresa". Isso quebrava o
+> login por CNPJ do Figma (dois funcionários da mesma empresa teriam a mesma credencial) e
+> exigia trocar a credencial para email, criar o vínculo `usuario_cliente`, fluxo de convite e
+> telas de gestão de equipe. **Revertido**: fica um login por empresa e o resto vai para o
+> backlog. O design segue intacto.
+
+### Rodada 2 — decidido
+23. **`ANALISTA`** tem escopo estreito: validar CNPJ (manualmente, quando a API falhar),
+    conferir documentos e liberar acesso. **`ADMIN`** tem acesso total: altera qualquer contrato
+    ou perfil, adiciona e remove informações, gerencia catálogos e usuários internos.
+24. **Documentos do prestador (RG/CNH, comprovantes) são vistos só pelo time Serviços Já! e pelo
+    próprio prestador.** O Cliente vê apenas **foto do perfil, habilidades e "sobre"**.
+25. **Login é por email**, para todos os papéis. CNPJ e CPF viram atributos, não credenciais;
+    login por documento vai para o **backlog**.
+
+> ⚠️ A decisão 25 **substitui** a decisão 19 na parte da credencial. O que permanece da 19 é
+> **um login por empresa** — vários usuários por empresa continuam no backlog.
+> **Conflito com o design**: o Figma mostra "Conta: CNPJ · Senha" em `/client/profile/{uuid}` e
+> "Conta: CPF · Senha" em `/provider/profile/{uuid}`. Os dois blocos precisam virar email.
+
+→ A **matriz de permissões completa** está em `PRD.md` §3.6.
+
+### Rodada 3 — decidido
+26. **O Figma é protótipo**, não contrato de telas. O `PRD.md` passa a ser a fonte de verdade.
+    Isso **encerra** os conflitos de design pendentes (login por email vs "Conta: CNPJ · Senha"
+    nos perfis): o código segue o PRD, o desenho se ajusta depois.
+27. **O Cliente vê os dados de contato do prestador** (nome, telefone, email) — resolve o furo
+    de comunicação criado por tirar o chat do escopo. Documentos continuam invisíveis para ele.
+28. **Campos calculados pelo sistema são imutáveis, nem o `ADMIN` edita**: `valor_total`,
+    `valor_dia`, quantidade de diárias, `percentual_taxa`, `valor_taxa`, dias agenciados e
+    saldos. A API rejeita esses campos no request. Lista completa em `PRD.md` §4.5.
+
+### Ainda em aberto
+- **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões
+  configurável? *(adiado: "vamos verificar depois")*
+- **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de lançamento
+  compensatório para recálculo financeiro pós-seleção.
+- **Endereço da obra** — o contrato só tem cidade e estado.
+- **Ações por estado do contrato** — editar/cancelar em `Rascunho` ≠ em `Em Execução`

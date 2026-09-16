@@ -1,354 +1,578 @@
-# PRD - Serviço Já
+# PRD - Serviços Já!
 **Product Requirements Document**
 
-**Data**: 06/09/2026  
-**Versão**: 1.0  
-**Status**: Em Desenvolvimento  
+**Data original**: 06/09/2026
+**Última revisão**: 15/09/2026
+**Versão**: 2.0
+**Status**: Em Desenvolvimento
 **Deadline**: 31/10/2026
+
+> **Este documento é a fonte de verdade do projeto.** O Figma é o **protótipo** — um esqueleto
+> visual que orientou o levantamento das regras, não um contrato de telas. Onde o código
+> precisar divergir do desenho, diverge; o que não pode divergir é o que está escrito aqui.
+>
+> **Nota de versão — o que mudou da v1.0 para a v2.0**
+> A v1.0 descrevia um **marketplace B2B genérico** (RFQ, propostas, chat, assinatura digital,
+> avaliação bilateral, disputas e multas). O mapeamento do Figma (15/09/2026, ver `Figma.log`)
+> mostrou que o produto realmente desenhado é outro: **agenciamento de mão de obra por créditos
+> pré-pagos**. Decisão do dia 15/09/2026: **o Figma é a fonte de verdade do modelo de negócio**
+> e este PRD foi reescrito para refletir o design. Chat, assinatura digital, avaliação bilateral,
+> disputas e multas **saíram do escopo v1** (§8).
 
 ---
 
 ## 1. Visão Geral
 
 ### Missão
-Conectar empresas que precisam de serviços com outras empresas que prestam serviços, criando um marketplace B2B confiável, seguro e eficiente.
+Conectar **empresas contratantes** a **prestadores de serviço individuais** por meio de uma
+plataforma de **agenciamento de mão de obra B2B**, eliminando a informalidade e a burocracia do
+modelo B2C tradicional.
+
+### Domínio
+**Construção civil e facilities.** O produto é especializado: o contrato modela NRs, EPIs,
+alojamento, pernoite, transporte e ferramental — não é um marketplace de serviços genérico.
 
 ### Problema
-Empresas enfrentam dificuldades para encontrar prestadores de serviços especializados de forma rápida e segura, sem riscos de fraude ou descumprimento de contrato.
+Empresas de construção e facilities precisam de mão de obra qualificada por período determinado
+e esbarram em informalidade, falta de documentação e insegurança jurídica. Prestadores autônomos,
+por sua vez, não têm um canal confiável para encontrar contratos de empresas maiores.
 
 ### Solução
-Uma plataforma web que centraliza a busca, negociação, contratação e pagamento de serviços entre empresas, com validações rigorosas, contratos digitais e sistema de avaliação bilateral.
+Uma plataforma web onde a **empresa contratante coloca créditos**, publica contratos (por
+**Diária** ou **Empreitada**), recebe **candidaturas** de prestadores, **seleciona** um prestador
+e paga pela plataforma mediante **Nota Fiscal**. A plataforma retém um **percentual escalonado**
+por volume.
 
 ---
 
-## 2. Público-Alvo
+## 2. Modelo de Negócio
 
-### Portais e Papéis
+### 2.1 Fluxo financeiro
 
-#### 2.1 Administrador
-- **Quem**: Time de desenvolvimento do projeto
-- **Acesso**: Exclusivo, painel administrativo privado
-- **Responsabilidades**:
-  - Gerenciar categorias de serviços
-  - Monitorar e resolver disputas entre usuários
-  - Validar dados de empresas (CNPJ)
-  - Auditar transações
-  - Gerenciar suporte e atendimento
+```
+Cliente (empresa) → compra créditos → PLATAFORMA → repassa ao Prestador após NF aprovada
+                                          ↓
+                                    retém a taxa de serviço
+```
 
-#### 2.2 Corporação (Empresa Contratante)
-- **Quem**: Empresas que precisam de serviços
-- **Fluxo**:
-  - Cadastro e validação de CNPJ
-  - Busca por prestadores com filtros
-  - Solicitação de serviços
-  - Negociação e contratação
-  - Pagamento e avaliação
+- Nenhum pagamento acontece fora da plataforma.
+- O **Cliente** compra créditos (Boleto ou Cartão de Crédito) antes de contratar.
+- O valor fica **reservado** dos créditos do Cliente **no momento em que o prestador é
+  selecionado** — não na publicação do contrato.
+- O **Prestador** recebe após a aprovação da Nota Fiscal. Não tem painel financeiro nem
+  compra créditos.
+- A **taxa de serviço só é cobrada na aprovação da Nota Fiscal**, no mesmo evento em que o
+  prestador é pago. Antes disso a plataforma não retém nada.
+- Na seleção, porém, é reservado **serviço + taxa**. Ex.: contrato de R$ 2.500 com taxa de 25%
+  reserva **R$ 3.125**. O dinheiro só *sai* na aprovação da NF; a reserva apenas garante que a
+  plataforma conseguirá cobrar a taxa. **Selecionar um prestador exige saldo ≥ serviço + taxa.**
 
-#### 2.3 Trabalhador (Empresa Prestadora)
-- **Quem**: Empresas que prestam serviços
-- **Fluxo**:
-  - Cadastro com validação de CPF/CNPJ
-  - Publicação de serviços/especialidades
-  - Resposta a solicitações com propostas
-  - Execução de serviços
-  - Recebimento e avaliação
+**Movimentações de crédito do Cliente**
+
+| Evento | Movimento |
+|---|---|
+| Compra de créditos | `saldo_disponivel` **+** valor comprado |
+| Seleção do prestador | `saldo_disponivel` → `saldo_reservado`, **em duas linhas**: `RESERVA_SERVICO` (valor do serviço) + `RESERVA_TAXA` (valor da taxa) |
+| Aprovação da NF | `saldo_reservado` **−** `RESERVA_SERVICO` → **Prestador** <br> `saldo_reservado` **−** `RESERVA_TAXA` → **Plataforma** |
+| Cancelamento | estorno para `saldo_disponivel` *(regras a definir — §9)* |
+
+### 2.2 Taxa de serviço (receita da plataforma)
+
+Paga **somente pela empresa contratante**, sobre o valor total de cada contrato agenciado.
+Escalonada pelo volume de **dias agenciados por mês**:
+
+| Dias agenciados / mês | Taxa |
+|---|---|
+| < 240 | **25%** |
+| < 600 | **20%** |
+| > 600 | **15%** |
+
+**Prestadores não pagam nada à plataforma.**
+
+#### Apuração da faixa — **mensal, com efeito no mês seguinte**
+A faixa **não muda retroativamente**. O volume de dias agenciados é apurado no fechamento do
+mês e a faixa resultante passa a valer **a partir do mês seguinte**.
+
+> Exemplo: o cliente agencia **240 dias em setembro** → a taxa dele **cai em outubro**.
+> Contratos de setembro permanecem na faixa vigente em setembro.
+
+#### O que conta como "dia agenciado"
+**Somente dias efetivamente agenciados**, apurados **dia a dia**:
+- Conta o **dia de trabalho efetivado**. **Não** contam dias de folga nem **faltas aprovadas**
+  (contrato de 10 diárias com 2 faltas aprovadas conta **8**).
+- **Rateado por dia**: cada dia conta para o **mês em que ele cai**. Um contrato de 28/09 a
+  05/10 contribui com os dias de setembro para setembro e os de outubro para outubro.
+- Como a contagem é por dia e não por contrato, um **contrato ainda em execução** no fechamento
+  do mês contribui com os dias já trabalhados naquele mês.
+
+> Consequência de modelagem: a apuração é uma **agregação sobre `dia_contrato`** (tipo
+> `TRABALHO`, agrupado pela data). A tabela `dia_contrato` deixa de ser um detalhe da Diária e
+> vira a **base do cálculo de receita da plataforma**.
+
+Implicações:
+- É preciso uma **apuração mensal por cliente** (dias agenciados no mês → faixa do mês seguinte).
+- `percentual_taxa` é **congelado no contrato** no momento da publicação, usando a faixa vigente
+  do cliente naquele mês. Por isso a tela de contrato exibe o percentual como um dado do
+  contrato, não como um cálculo em tempo real.
+- **Cliente novo**, sem mês anterior apurado, entra na faixa inicial de **25%**.
+- **Apuração fechada não é reaberta.** Se uma falta de 25/09 só for aprovada em 03/10, setembro
+  permanece como foi fechado e o ajuste de dias entra no **mês corrente** (outubro). Contratos
+  que já congelaram o percentual não são recalculados. O desvio se corrige na apuração seguinte.
+
+### 2.3 Requisitos mínimos do Prestador
+- **CNPJ ativo** (MEI)
+- **Documentação completa** (documento de identificação + comprovantes de experiência)
+- Experiência prévia *(critério a definir — ver §9)*
+- **Não** precisa ter maquinário ou ferramentas: oferece **somente mão de obra**
 
 ---
 
-## 3. Escopo
+## 3. Perfis de Usuário
 
-### Funcionalidades Principais (MVP Completo)
+### 3.1 Papéis internos da plataforma — **ADMIN** e **ANALISTA**
+- **Quem**: time de operação do Serviços Já!
+- **`ANALISTA`** — escopo **estreito e operacional**: validar CNPJ (**manualmente, quando a API
+  de consulta falhar**), conferir os documentos do prestador e **liberar acesso**. Nada além disso.
+- **`ADMIN`** — **acesso total ao sistema**: tudo do analista, mais alterar qualquer contrato ou
+  perfil, **adicionar e remover informações**, gerenciar catálogos e usuários internos, e
+  auditoria financeira.
 
-#### 3.1 Autenticação e Cadastro
-- [ ] Login e cadastro para 3 portais distintos
-- [ ] Validação de CNPJ (formato + regularidade)
-- [ ] Validação de CPF
-- [ ] Cadastro em 2 fases:
-  - **Fase 1**: Cadastro simples (acesso ao site, busca)
-  - **Fase 2**: Perfil completo (podem solicitar/prestar serviços)
+> 🔒 **Campos calculados pelo sistema são imutáveis — nem o `ADMIN` edita.** Ver §4.5.
+> O `ADMIN` edita campos de **entrada**; os **derivados** são sempre recalculados a partir deles.
+> Como editar uma entrada recalcula os derivados de um contrato que já tem dinheiro reservado,
+> **toda ação de `ADMIN` é registrada em `log_auditoria`** e recálculo financeiro após a seleção
+> gera **lançamento compensatório** no extrato, nunca ajuste silencioso.
+- **Tela `/admin`**: ⏸️ **backlog** — será a tela inicial dos Administradores com dados da
+  plataforma. Não há frame desenhado ainda.
+
+### 3.2 Cliente (Empresa Contratante)
+- **Quem**: empresas que precisam de mão de obra
+- **Identificação da empresa**: **CNPJ** (atributo, não credencial)
+- **Login**: **email + senha**
+- ❗ **Um login por empresa** no MVP. O campo "Responsável" do perfil é um dado da empresa,
+  não um segundo usuário.
+- ⏸️ **Backlog**: vários usuários por empresa, com papéis distintos (`CLIENTE_ADMIN` /
+  `CLIENTE_ANALISTA`) e telas de gestão de equipe — ver §8.
+- **Fluxo**: cadastro → validação de CNPJ → compra de créditos → publicação de contrato →
+  seleção de prestador → acompanhamento da execução → aprovação da NF
+
+### 3.3 Prestador (Profissional Individual)
+- **Quem**: **profissionais individuais** — pessoa física com **CPF + CNPJ (MEI)**
+- ❗ **Não existe prestador pessoa jurídica com funcionários.** 1 prestador = 1 pessoa.
+- **Fluxo**: cadastro → validação de CNPJ e documentos → consulta ao mural de oportunidades →
+  candidatura → execução → emissão de NF → recebimento
+
+### 3.4 Papéis (roles)
+
+| Papel | Escopo | Quem é |
+|---|---|---|
+| `ADMIN` | plataforma | time Serviços Já! — acesso total |
+| `ANALISTA` | plataforma | time Serviços Já! — validação de CNPJ, documentos e liberação |
+| `CLIENTE` | uma empresa | a empresa contratante (**login único por empresa**) |
+| `PRESTADOR` | ele mesmo | profissional individual |
+
+**4 papéis no MVP**, com `role` numa única entidade `usuario` — não herança de classes.
+A hierarquia de 5 classes da Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/
+`CompanyAdm`/`Provider`) fica sem os dois papéis intra-empresa, que foram para o backlog (§8).
+*(Mecanismo de autorização ainda não decidido — §9.)*
+
+**Login: email + senha para todos os papéis.** CNPJ e CPF são atributos da empresa e do
+prestador, **não credenciais** — login por documento vai para o backlog (§8).
+
+> ⚠️ **Conflito com o design**: o Figma mostra "Conta: CNPJ · Senha" em
+> `/client/profile/{uuid}` e "Conta: CPF · Senha" em `/provider/profile/{uuid}`. Com login por
+> email, esses dois blocos precisam ser ajustados no Figma.
+
+### 3.6 Matriz de Permissões
+
+| Ação | `ADMIN` | `ANALISTA` | `CLIENTE` | `PRESTADOR` |
+|---|:---:|:---:|:---:|:---:|
+| Validar CNPJ / conferir documentos | ✅ | ✅ | — | — |
+| Liberar / bloquear acesso | ✅ | ✅ | — | — |
+| Gerenciar catálogos (tipo de serviço, curso, habilidade) | ✅ | — | — | — |
+| Gerenciar usuários internos | ✅ | — | — | — |
+| Alterar qualquer contrato ou perfil, add/remover dados | ✅ | — | — | — |
+| Auditoria financeira da plataforma | ✅ | — | — | — |
+| Comprar créditos | ✅¹ | — | ✅ | — |
+| Criar e publicar contrato | ✅¹ | — | ✅ | — |
+| Selecionar prestador *(reserva crédito)* | ✅¹ | — | ✅ | — |
+| Registrar falta | ✅¹ | — | ✅ | — |
+| Aprovar a remoção da falta | — | — | — | ✅ |
+| Ver o mural de oportunidades | ✅ | ✅ | — | ✅ |
+| Candidatar-se a contrato | — | — | — | ✅ |
+| Emitir / anexar Nota Fiscal | ✅¹ | — | — | ✅ |
+| Aprovar Nota Fiscal *(libera pagamento)* | ✅¹ | — | ✅ | — |
+| Ver RG/CNH e comprovantes do prestador | ✅ | ✅ | ❌ | ✅² |
+| Ver foto, habilidades e "sobre" do prestador | ✅ | ✅ | ✅ | ✅ |
+
+¹ por ser acesso total; ação em nome de terceiro **exige registro em `log_auditoria`**
+² apenas os próprios documentos
+
+**Escopo por registro**: o `CLIENTE` só enxerga os **próprios** contratos, créditos e
+candidaturas; o `PRESTADOR` só os contratos em que se candidatou ou foi selecionado, e o
+próprio perfil.
+
+### 3.5 Status de acesso
+Todo usuário tem `Pendente` · `Liberado` · `Bloqueado`, determinado pela **validação do CNPJ**.
+
+**`Pendente` = navega, mas não transaciona.** Pode fazer login, ver o mural e perfis e
+completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se nem comprar crédito.
+
+---
+
+## 4. Funcionalidades (MVP)
+
+### 4.1 Autenticação e Cadastro
+- [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
+- [ ] **Credencial: email + senha** para todos os papéis (login por CNPJ/CPF → backlog, §8)
+- [ ] Cadastro de Cliente B2B (`/register/client`)
+- [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
+      de privacidade
+- [ ] Validação de **CNPJ** (formato + regularidade: `ATIVO` / `INAPTO` / `BAIXADO`)
+- [ ] Validação de **CPF** (prestador)
+- [ ] Validação de email (confirmação)
 - [ ] Recuperação de senha
-- [ ] JWT para autenticação (sugestão técnica)
+- [ ] Login social *(previsto no design — "ou use sua conta vinculada"; ver §9)*
 
-#### 3.2 Gestão de Categorias e Filtros
-- [ ] Plataforma escalável para qualquer categoria de serviço
-- [ ] Tipos de profissionais/especialidades (a definir conforme evolução)
-- [ ] Filtros avançados de busca:
-  - Categoria de serviço
-  - Preço (mín/máx)
-  - Localização/região
-  - Tempo de execução
-  - Avaliação/rating
-  - Disponibilidade
+### 4.2 Perfil do Cliente (`/client/profile/{uuid}`)
+- [ ] **Conta**: ID sequencial autogerado · **email (login)** · CNPJ · senha · status de acesso
+- [ ] **Foto do perfil** (upload)
+- [ ] **Dados Gerais**: nome da empresa · segmento de atuação · tipos de profissional de
+      interesse · responsável · telefone · email corporativo · data do cadastro
+- [ ] **Documentação** (preenchida pela validação do CNPJ): status do CNPJ · razão social ·
+      endereço · cidade · estado · CNAE principal + descrição · atividades secundárias
+- [ ] **Financeiro**: créditos disponíveis · taxa de serviço vigente
+- [ ] **Contratos**: histórico
+- [ ] **Sobre**: biografia da empresa
 
-#### 3.3 Sistema de Busca e Matching
-- [ ] Busca por categoria + especialidade
-- [ ] Publicação de serviços por prestadores
-- [ ] Matching/recomendação (critério a definir)
-- [ ] Visualização detalhada de prestador:
-  - Portfolio/histórico de serviços
-  - Avaliações e reviews
-  - Disponibilidade
-  - Preços
+### 4.3 Perfil do Prestador (`/provider/profile/{uuid}`)
+- [ ] **Conta**: ID sequencial autogerado · **email (login)** · CPF · senha · status de acesso
+- [ ] **Foto do perfil** (upload)
+- [ ] **Dados Gerais**: nome completo · email · telefone · endereço · cidade · estado ·
+      aceite de termos · "já tem CNPJ?" · data do cadastro
+- [ ] **Documentação** *(visível só para o time Serviços Já! e para o próprio prestador)*:
+      CNPJ · status do CNPJ · razão social · CNAE principal + descrição · atividades
+      secundárias · **documento de identificação (RG ou CNH)** ·
+      **documentos de experiência** (anexos)
 
-#### 3.4 Ciclo de Vida de um Serviço
+> 🔒 **O Cliente nunca vê os documentos do prestador** (RG/CNH, comprovantes de experiência).
+> Vê **foto do perfil, habilidades, "sobre"** e os **dados de contato** (nome, telefone e email).
+> A plataforma **atesta** a validação documental em vez de repassar dado pessoal sensível —
+> postura defensável em LGPD — mas libera o contato para que as partes possam combinar a
+> execução, já que não há chat no MVP.
+>
+> *Aplicado a partir da **seleção** do prestador, que é o ponto onde a relação contratual nasce
+> e o contato passa a ser necessário. Se você quiser liberar já na candidatura, é só dizer.*
+- [ ] **Habilidades**: áreas de atuação · nível de conhecimento por área ·
+      "já atuou como terceirizado?"
+- [ ] **Contratos**: histórico
+- [ ] **Sobre**: biografia do prestador
+- [ ] ❌ **Sem painel financeiro** — o prestador apenas recebe após o contrato
 
-**Estados possíveis:**
-1. **Aberto** — Corporação criou solicitação, aguardando propostas
-2. **Proposta Recebida** — Trabalhador(es) enviou(ram) proposta(s)
-3. **Negociando** — Em contato via chat
-4. **Contrato Aceito** — Ambos assinaram o contrato digital
-5. **Em Execução** — Serviço sendo realizado
-6. **Concluído** — Finalizado, aguardando pagamento/avaliação
-7. **Pago** — Pagamento confirmado
-8. **Avaliado** — Ambos avaliaram
-9. **Cancelado** — Cancelamento com multa por quebra de contrato
+### 4.4 Painel de Créditos (`/client/profile/{uuid}/billing`) — **exclusivo do Cliente**
+- [ ] Créditos atuais
+- [ ] Adicionar créditos (valor total)
+- [ ] **Método preferencial de pagamento**: Boleto ou Cartão de Crédito
+- [ ] Email para comprovante · telefone
+- [ ] Data da última compra
+- [ ] **Histórico de créditos** (extrato: compras, reservas, liberações, estornos)
 
-- [ ] Transições entre estados
-- [ ] Rastreamento de progresso
+### 4.5 Contratos
+
+#### Tipos
+| Tipo | Cliente informa | Sistema calcula |
+|---|---|---|
+| **Diária** | nº de diárias + **valor por dia** | **valor total** (ex.: 10 × R$ 250 = R$ 2.500) |
+| **Empreitada** | **valor total** + período | **valor por dia** (ex.: R$ 3.000 / 10 = R$ 300) |
+
+#### Criação (`/client/contracts/new`)
+- [ ] Tipo de contrato: Diária | Empreitada
+- [ ] ID sequencial autogerado · Status inicial `Rascunho`
+- [ ] Tipo de serviço (dropdown)
+- [ ] Localização: cidade + estado (dropdowns)
+- [ ] **Financeiro**: data de início · data de encerramento · valor total · valor por dia
+- [ ] **Operação**:
+  - Dias de trabalho · dias de folga · **dias de falta** *(somente Diária)*
+  - Pernoite em casa? · Pernoite em alojamento?
+  - Transporte fornecido pela empresa? · Ferramentas fornecidas pela empresa?
+  - EPI's fornecidos pela empresa? · Área de alimentação disponível?
+- [ ] **Cursos exigidos** (multi-seleção: NR-35, NR-20, Primeiros Socorros, …)
+- [ ] **Habilidades desejadas** (multi-seleção)
+- [ ] **Descrição do serviço** — texto estruturado: o que o prestador deve fornecer ·
+      tarefas e responsabilidades · proibições · regras de aceite e pagamento
+
+#### Visualização (`/client/contracts/{uuid}`)
+Tudo acima em leitura, **mais**:
+- [ ] Percentual e **valor da taxa de serviço** (= valor total × taxa). O percentual é
+      **congelado na publicação** conforme a faixa vigente do cliente (§2.2)
+- [ ] **Nota Fiscal emitida pelo prestador** (anexo) e **data de aprovação da NF**
+- [ ] **Candidaturas**: candidato · nível · hora da candidatura · selecionar →
+      grava `Selecionado` + `Data de Seleção`
+
+#### Cardinalidade
+**1 contrato : 1 prestador.** Várias candidaturas, **uma única seleção**.
+
+#### 🔒 Campos calculados — imutáveis por qualquer papel
+
+Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados:
+
+| Campo derivado | Calculado a partir de |
+|---|---|
+| `valor_total` *(Diária)* | nº de diárias × valor por dia |
+| `valor_dia` *(Empreitada)* | valor total ÷ dias do período |
+| quantidade de diárias / dias de trabalho | as datas registradas em `dia_contrato` |
+| `percentual_taxa` | faixa vigente do cliente, congelada na publicação (§2.2) |
+| `valor_taxa` | `valor_total` × `percentual_taxa` |
+| dias agenciados do mês | agregação de `dia_contrato` (§2.2) |
+| `saldo_disponivel` / `saldo_reservado` | soma das linhas de `transacao_credito` |
+| IDs, data de cadastro, data de seleção, data de aprovação da NF | o próprio evento |
+
+**Campos de entrada** (editáveis conforme o papel e o estado): tipo de contrato, tipo de
+serviço, localização, datas, valor por dia *(Diária)* ou valor total *(Empreitada)*, dias de
+trabalho e folga, condições de operação, cursos, habilidades e descrição.
+
+> A UI deve exibir os derivados como **somente leitura**, e a API deve **ignorar ou rejeitar**
+> esses campos no corpo da requisição — não basta desabilitar o input no front.
+
+### 4.6 Mural de Oportunidades (`/provider/opportunities`)
+- [ ] Listagem de contratos abertos em cards (logo da empresa, ID, tipo, descrição)
+- [ ] Filtros: **tipo de contrato** (Diária/Empreitada) e **tipo de serviço**
+- [ ] Candidatura ao contrato
+- [ ] Campo **Promocode** → ⏸️ backlog (§8)
+
+### 4.7 Ciclo de vida do contrato
+
+| # | Estado | Gatilho |
+|---|---|---|
+| 1 | **Rascunho** | Cliente está montando o contrato |
+| 2 | **Aguardando Prestadores** | Cliente publica no mural |
+| 3 | **Prestador Selecionado** | Cliente escolhe um candidato → **valor é reservado dos créditos** |
+| 4 | **Em Execução** | Chega a data de início; controle de dias de trabalho/folga/falta |
+| 5 | **Concluído** | Fim do período de execução |
+| 6 | **NF Emitida** | Prestador anexa a Nota Fiscal |
+| 7 | **Pago** | Cliente aprova a NF → valor do serviço liberado ao prestador **e taxa cobrada do cliente no mesmo evento** |
+| 8 | **Cancelado** | Cancelamento (regras a definir — §9) |
+
+- [ ] Transições de estado com validação
 - [ ] Notificações de mudança de estado
 
-#### 3.5 Chat e Comunicação
-- [ ] Chat integrado entre Corporação e Trabalhador
-- [ ] Histórico de conversa persistente
-- [ ] Notificações de mensagens
-- [ ] Ativa após match/proposta aceita
+### 4.8 Controle de faltas (somente Diária)
+- [ ] **Faltas descontam do valor** do contrato
+- [ ] **O Cliente registra** a falta
+- [ ] **O Prestador aprova** a remoção do dia
+- [ ] Recálculo do valor total após a aprovação
 
-#### 3.6 Contratos Digitais e Assinaturas
-- [ ] Geração automática de contrato
-- [ ] Termos e condições customizáveis
-- [ ] Assinatura digital de ambas as partes
-- [ ] Armazenamento seguro de contratos
-- [ ] Download/visualização de contrato
+> Implicação técnica: exige uma entidade de **dia de contrato** com estado próprio e um passo
+> de **confirmação bilateral** — não é um campo simples no contrato.
 
-#### 3.7 Sistema de Pagamento
-- [ ] Pagamento via plataforma (nenhum pagamento fora)
-- [ ] **TBD com o grupo**:
-  - Momento do pagamento (pré, pós, escrow)
-  - Processamento (simulado ou integração real com gateway)
-  - Fluxo de reembolso
-- [ ] Segurança contra fraude
-- [ ] Recibos e comprovantes
-
-#### 3.8 Sistema de Avaliação e Reviews
-- [ ] Avaliações bilaterais:
-  - Corporação avalia Trabalhador
-  - Trabalhador avalia Corporação
-- [ ] Escala de avaliação (TBD - sugestão: 1-5 estrelas)
-- [ ] Comentário obrigatório (TBD)
-- [ ] Histórico de avaliações público
-- [ ] Sistema de reputação
-
-#### 3.9 Validações e Segurança
-- [ ] Validação de CNPJ (verificar se está ativo/regular)
-- [ ] Validação de CPF
-- [ ] Validação de email (confirmação)
-- [ ] Confirmação de telefone (TBD)
-- [ ] Validação de dados de empresa
-- [ ] Proteção contra fraude
-- [ ] Rate limiting para requisições
+### 4.9 Validações e Segurança
+- [ ] Validação de CNPJ (ativo/inapto/baixado) e CPF
+- [ ] Senhas em BCrypt · autenticação JWT · autorização por Roles
+- [ ] Rate limiting
 - [ ] Sanitização de inputs
-
-#### 3.10 Painel Administrativo
-- [ ] Dashboard com métricas:
-  - Total de usuários
-  - Total de serviços
-  - Receita/volume
-  - Disputas pendentes
-- [ ] Gerenciamento de usuários
-- [ ] Aprovação/bloqueio de usuários
-- [ ] Resolução de disputas (TBD com grupo)
-- [ ] Logs de atividades
-- [ ] Gerenciamento de categorias
-
-#### 3.11 Cancelamento e Multas
-- [ ] Cancelamento permitido em qualquer estado
-- [ ] **TBD com o grupo**:
-  - Cálculo de multa (% ou valor fixo)
-  - Quem recebe a multa (plataforma ou outra parte)
-  - Condições de cancelamento sem multa
+- [ ] Auditoria das transações de crédito (ACID)
 
 ---
 
-## 4. Fluxos de Usuário
+## 5. Fluxos de Usuário
 
-### 4.1 Fluxo: Corporação Solicita Serviço
-
+### 5.1 Cliente contrata
 ```
-1. Login/Cadastro
-2. Completar perfil (Fase 2)
-3. Buscar serviço com filtros
-4. Visualizar perfis de prestadores
-5. Enviar solicitação/RFQ (Request for Quote)
-6. Receber propostas de prestadores
-7. Negociar via chat
-8. Revisar e aceitar contrato
-9. Assinar contrato digitalmente
-10. Acompanhar execução do serviço
-11. Confirmar conclusão
-12. Efetuar pagamento
-13. Avaliar prestador
-14. Finalizador
+1. Cadastro (/register/client) → validação de CNPJ → acesso Liberado
+2. Compra créditos (/client/profile/{uuid}/billing)
+3. Cria contrato (/client/contracts/new) → Rascunho
+4. Publica → Aguardando Prestadores
+5. Recebe candidaturas
+6. Seleciona 1 prestador → valor RESERVADO dos créditos
+7. Acompanha execução (registra faltas, se Diária)
+8. Recebe a NF do prestador
+9. Aprova a NF → crédito liberado ao prestador, taxa retida pela plataforma
 ```
 
-### 4.2 Fluxo: Trabalhador Presta Serviço
-
+### 5.2 Prestador executa
 ```
-1. Login/Cadastro
-2. Completar perfil (Fase 2)
-3. Publicar serviços/especialidades
-4. Receber notificações de solicitações
-5. Enviar proposta com preço e prazo
-6. Negociar via chat
-7. Revisar e aceitar contrato
-8. Assinar contrato digitalmente
-9. Executar serviço
-10. Marcar como concluído
-11. Receber pagamento
-12. Ser avaliado
-13. Avaliar corporação
+1. Cadastro (/register/provider) → CNPJ + documentos → acesso Liberado
+2. Completa perfil: habilidades, áreas de atuação, experiência
+3. Consulta o mural (/provider/opportunities)
+4. Candidata-se a um contrato
+5. É selecionado
+6. Executa o serviço (aprova ou contesta faltas registradas)
+7. Emite e anexa a Nota Fiscal
+8. Recebe o valor após a aprovação da NF
 ```
 
 ---
 
-## 5. Especificações Técnicas
+## 6. Especificações Técnicas
 
-### 5.1 Stack Tecnológico
+### 6.1 Stack
 
 | Camada | Tecnologia | Observações |
-|--------|-----------|------------|
-| **Frontend** | React + Vite | Iniciado |
-| **CSS** | Tailwind CSS | Configurado |
-| **Backend** | Java + Spring Boot | A implementar |
-| **Banco de Dados** | PostgreSQL | A configurar |
-| **Autenticação** | JWT | Recomendado |
-| **Hospedagem Frontend** | Vercel ou GitHub Pages | TBD |
-| **Hospedagem Backend** | TBD | Necessário servidor para Java |
-| **Comunicação Real-time** | WebSocket ou Polling | Para chat e notificações |
+|---|---|---|
+| **Frontend** | React + Vite | Em andamento |
+| **CSS** | Tailwind CSS | Instalado, ainda não utilizado |
+| **Roteamento** | react-router-dom v7 | Instalado, **ainda não utilizado** |
+| **Backend** | Java + Spring Boot | API RESTful, arquitetura em camadas |
+| **Banco** | **PostgreSQL** | Modelagem relacional normalizada |
+| **Segurança** | Spring Security + JWT + BCrypt | Acesso controlado por Roles |
+| **Testes** | JUnit 5 (back) / Jest (front) | **Cobertura mínima de 70% — obrigatória** |
+| **Versionamento** | Git + GitHub | Repositório público, branch por funcionalidade |
+| **Hospedagem front** | Vercel ou GitHub Pages | TBD |
+| **Hospedagem back** | TBD | Necessário servidor para Java |
 
-### 5.2 Banco de Dados (Estrutura Conceitual)
+### 6.2 Rotas (conforme Figma)
 
-**Entidades principais:**
-- `users` — Usuários (admin, corporação, trabalhador)
-- `empresas` — Dados de empresas/corporações
-- `prestadores` — Dados de prestadores
-- `categorias` — Categorias de serviços
-- `servicos` — Publicação de serviços por prestador
-- `solicitacoes` — Solicitações de serviço
-- `propostas` — Propostas de prestadores
-- `contratos` — Contratos digitais
-- `chats` — Mensagens entre partes
-- `pagamentos` — Histórico de pagamentos
-- `avaliacoes` — Reviews bilaterais
-- `disputas` — Registros de disputas
+**Site institucional**: `/` (Home + About + Details) · `/business` (Empresas) · `/partners` (Prestadores MEI)
 
----
+**Aplicação**: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
+`/client/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
+`/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
 
-## 6. Decisões Pendentes (TBD)
+Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 
-### Críticas (Definir com o Grupo)
+### 6.3 Banco de Dados (estrutura conceitual)
 
-- [ ] **Momento do Pagamento**: Pré-pagamento, pós-pagamento, ou escrow?
-- [ ] **Integração de Pagamento**: Gateway real (Stripe, PayPal) ou simulado?
-- [ ] **Cálculo de Multa**: Percentual? Valor fixo? Escala progressiva?
-- [ ] **Resolução de Disputas**: Processo arbitral? Automático? Manual por admin?
-- [ ] **Reembolso**: Em que circunstâncias? Retenção de multa?
-- [ ] **Limite de Serviços Simultâneos**: Há limite por usuário?
-- [ ] **Bloqueio de Usuários**: Após quantas avaliações ruins?
+| Tabela | Conteúdo |
+|---|---|
+| `usuario` | `login` (CNPJ, CPF ou email), senha, `role`, status de acesso, data de cadastro |
+| `cliente` | dados da empresa contratante (CNPJ, segmento, responsável, CNAE, endereço) |
+| `prestador` | dados do profissional (CPF, CNPJ MEI, endereço, aceite de termos) |
+| `documento` | anexos do prestador (RG/CNH, comprovantes de experiência) |
+| `tipo_servico` | catálogo de tipos de serviço |
+| `habilidade` | catálogo de habilidades |
+| `prestador_habilidade` | habilidade + **nível de conhecimento** do prestador |
+| `curso` | catálogo de cursos/NRs |
+| `contrato` | contrato B2B (tipo, status, valores, taxa, condições de operação) |
+| `contrato_curso` | cursos exigidos pelo contrato |
+| `contrato_habilidade` | habilidades desejadas pelo contrato |
+| `dia_contrato` | cada dia: `TRABALHO` / `FOLGA` / `FALTA` + estado da aprovação da falta |
+| `candidatura` | candidatura do prestador ao contrato (+ seleção e data de seleção) |
+| `conta_credito` | saldo disponível e **saldo reservado** do cliente |
+| `transacao_credito` | extrato: `COMPRA`, `RESERVA_SERVICO`, `RESERVA_TAXA`, `LIBERACAO_PRESTADOR`, `COBRANCA_TAXA`, `ESTORNO` |
+| `nota_fiscal` | anexo, data de emissão, data de aprovação |
+| `log_auditoria` | quem fez o quê, quando e sobre qual registro — obrigatório para toda ação de `ADMIN` |
+| `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados (agregação de `dia_contrato`) e **faixa vigente no mês seguinte** |
 
-### Secundárias (A Meu Critério)
-
-- [ ] **Escala de Avaliação**: 1-5 estrelas? 1-10? Outra?
-- [ ] **Avaliação Obrigatória**: Pode deixar em branco ou é obrigatória?
-- [ ] **Notificações**: Email, SMS, push in-app?
-- [ ] **Recomendação de Prestadores**: Algoritmo simples ou ML?
-- [ ] **Geolocalização**: Usar para sugerir prestadores próximos?
-
----
-
-## 7. Restrições e Fora do Escopo
-
-### Fora do Escopo (v1)
-
-- [ ] App mobile (web only)
-- [ ] Multi-idioma (português apenas)
-- [ ] Integração com redes sociais
-- [ ] Sistema de referência/afiliação
-- [ ] Subscriptions/planos VIP
-- [ ] Gestão de RH para prestadores
-- [ ] Análise de dados avançada
-
-### Possível Futuro (v2+)
-
-- [ ] App mobile iOS/Android
-- [ ] Multi-idioma
-- [ ] Integração com gateway de pagamento real
-- [ ] Recomendação com ML
-- [ ] Notificações push
-- [ ] API pública para integrações
+**~18 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
+de crédito.
 
 ---
 
-## 8. Timeline e Milestones
-
-**Deadline Final**: 31/10/2026 (~55 dias a partir de 06/09/2026)
-
-### Sugestão de Milestones
-
-| Marco | Data Sugerida | Entregas |
-|-------|---------------|----------|
-| **MVP Backend** | 15/09 | Autenticação, CRUD de usuários |
-| **MVP Frontend** | 20/09 | Login, cadastro, home |
-| **Busca e Filtros** | 25/09 | Sistema de busca funcional |
-| **Chat** | 30/09 | Chat integrado |
-| **Contratos** | 10/10 | Assinatura digital |
-| **Pagamento** | 15/10 | Integração (real ou simulada) |
-| **Avaliações** | 20/10 | Sistema de reviews |
-| **Admin Panel** | 25/10 | Painel administrativo |
-| **Testes e Deploy** | 31/10 | Testes, otimização, deploy |
-
----
-
-## 9. Equipe
-
-- **Tamanho**: 5 pessoas
-- **Perfil**: Generalistas (sem especialistas profundos)
-- **Implicação**: Documentação clara, arquitetura simples, comunicação constante
-
----
-
-## 10. Critérios de Aceitação
+## 7. Critérios de Aceitação
 
 O projeto será considerado **completo** quando:
 
-- ✅ Todos os 3 portais funcionarem (Admin, Corporação, Trabalhador)
-- ✅ Autenticação com validações implementadas
-- ✅ Busca com filtros avançados operacional
-- ✅ Chat integrado entre partes
-- ✅ Contratos digitais com assinatura
-- ✅ Sistema de pagamento (simulado ou real)
-- ✅ Avaliação bilateral funcional
-- ✅ Admin panel com controle
-- ✅ Banco de dados PostgreSQL normalizado
-- ✅ Deploy em produção (Vercel + servidor backend)
-- ✅ Documentação técnica completa
+- ✅ Site institucional no ar (`/`, `/business`, `/partners`)
+- ✅ Cadastro e login funcionais para Cliente e Prestador, com validação de CNPJ/CPF
+- ✅ Compra de créditos e extrato funcionando
+- ✅ Criação e publicação de contrato (Diária e Empreitada) com cálculo correto de valores
+- ✅ Mural de oportunidades com filtros e candidatura
+- ✅ Seleção de prestador com **reserva de crédito**
+- ✅ Controle de dias com fluxo de falta (registro pelo cliente + aprovação pelo prestador)
+- ✅ Emissão e aprovação de Nota Fiscal, com liberação do crédito e retenção da taxa
+- ✅ Cálculo correto da taxa escalonada (25/20/15%)
+- ✅ Banco PostgreSQL normalizado com transações ACID
+- ✅ **Cobertura de testes ≥ 70%** (back e front)
+- ✅ Deploy em produção
+- ✅ Documentação técnica (README com guia de execução, diagramas da arquitetura RESTful e
+  decisões de design)
 
 ---
 
-## 11. Próximos Passos
+## 8. Fora do Escopo v1 / Backlog
 
-1. **Validar PRD com o grupo** — Revisar todas as funcionalidades e decisões pendentes
-2. **Definir decisões TBD** — Especialmente pagamento, multas e resolução de disputas
-3. **Criar diagrama ER** — Estrutura completa do banco de dados
-4. **Iniciar desenvolvimento** — Backend e frontend em paralelo
-5. **Setup de CI/CD** — GitHub Actions para testes automáticos
-6. **Iterar conforme necessário** — Este PRD é vivo e pode evoluir
+### Adiado em 15/09/2026
+- ⏸️ **Login por CNPJ / CPF**. No MVP a credencial é **email + senha** para todos os papéis.
+- ⏸️ **Vários usuários por empresa cliente**, com papéis distintos (`CLIENTE_ADMIN` /
+  `CLIENTE_ANALISTA`). Exige o vínculo `usuario_cliente`, fluxo de convite e telas de gestão de
+  equipe — nada disso existe no Figma. No MVP vale **um login por empresa**.
+
+### Removido do MVP em 15/09/2026 (estava na v1.0, não existe no design)
+- ❌ **Chat integrado** entre cliente e prestador (WebSocket)
+- ❌ **Contrato digital com assinatura eletrônica** — o aceite é o fluxo
+  candidatura → seleção; a **Nota Fiscal** é o comprovante da execução
+- ❌ **Avaliação bilateral / reviews** — evolui para o "Nível" do prestador (abaixo)
+- ❌ **Disputas** e **multas por cancelamento**
+
+### Backlog (desenhado ou citado, mas fora do MVP)
+- ⏸️ **`/admin`** — tela inicial dos Administradores com dados da plataforma
+- ⏸️ **"Nível" do prestador** — reputação acumulada ao longo dos contratos executados
+- ⏸️ **Promocode** — cupom de R$ X em créditos para novos clientes testarem a plataforma
+
+### Fora do escopo (v1)
+- App mobile nativo (web responsivo apenas)
+- Multi-idioma (português apenas)
+- Integração com redes sociais
+- Sistema de referência/afiliação
+- Planos VIP / subscriptions
+- Recomendação com ML
+- Análise de dados avançada
 
 ---
 
-## Notas
+## 9. Decisões Pendentes (TBD)
 
-- Este PRD é versão 1.0 e será atualizado conforme o projeto evolui
-- Qualquer mudança deve ser comunicada ao time
-- Decisões críticas devem ser levantadas com o grupo antes de implementação
-- Documentação será mantida em sync com o código
+### Bloqueiam a modelagem do banco
+- [ ] **Mecanismo de autorização**: enum `role` + `@PreAuthorize`, ou tabela de permissões
+      configurável? *(adiado na Sessão 3 — "vamos verificar depois")*
+- [ ] **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de que recálculo
+      financeiro após a seleção gera lançamento compensatório, nunca ajuste silencioso.
+- [ ] **Endereço da obra** — o contrato só tem cidade e estado. Falta o endereço de execução,
+      necessário agora que as partes se falam direto.
 
+### Regras a definir
+- [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
+- [ ] **"Experiência prévia"** como requisito do prestador: o que valida? Quem aprova?
+- [ ] **Contestação de falta**: e se o prestador **não** aprovar a remoção do dia?
+- [ ] **Login social**: entra no MVP ou sai? O design prevê ("ou use sua conta vinculada").
+- [ ] **Notificações**: email, in-app, ambos?
+- [ ] Limite de contratos simultâneos por prestador?
+
+---
+
+## 10. Timeline e Milestones
+
+**Deadline final**: 31/10/2026
+
+| Marco | Data sugerida | Entregas |
+|---|---|---|
+| **Fundação** | 20/09 | Modelagem ER, permissões definidas, rotas no front, convenções fechadas |
+| **Autenticação** | 25/09 | Login, cadastro Cliente e Prestador, validação CNPJ/CPF, JWT |
+| **Perfis** | 30/09 | Perfil do Cliente e do Prestador, upload de documentos |
+| **Créditos** | 05/10 | Painel de créditos, compra, extrato, reserva |
+| **Contratos** | 12/10 | Criação (Diária/Empreitada), publicação, visualização |
+| **Mural e candidatura** | 18/10 | Oportunidades, filtros, candidatura, seleção |
+| **Execução e NF** | 24/10 | Dias de trabalho/folga/falta, NF, aprovação, liberação de crédito |
+| **Site institucional** | 27/10 | `/`, `/business`, `/partners` |
+| **Testes e Deploy** | 31/10 | Cobertura ≥ 70%, deploy, documentação |
+
+---
+
+## 11. Equipe
+
+- **Tamanho**: 5 pessoas
+- **Perfil**: generalistas
+- **Implicação**: documentação clara, arquitetura simples, comunicação constante
+
+---
+
+## 12. Referências
+
+- **`Figma.log`** — mapeamento do design e histórico de todas as decisões
+- **`CLAUDE.md`** — convenções de código e regras de trabalho
+- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend e ordem de correção
+- **Figma**: `ONnLf1dmAXa8SsZfIzYd4p` — protótipo
+
+### Repositórios
+| Repo | Conteúdo |
+|---|---|
+| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `Figma.log`, `BACKEND_ANALISE.md` |
+| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos documentos |
+
+⚠️ Ao mudar uma regra de negócio, atualize **os dois repositórios no mesmo dia**. Foi a
+divergência entre eles que fez o backend nascer sobre o modelo errado.
+
+---
+
+**Nota**: este PRD é vivo. Qualquer mudança deve ser comunicada ao time. Em caso de divergência
+entre este documento e o Figma, **este documento prevalece** — o Figma é protótipo.
