@@ -425,11 +425,28 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
 > telas de gestão de equipe. **Revertido**: fica um login por empresa e o resto vai para o
 > backlog. O design segue intacto.
 
+### Rodada 2 — decidido
+23. **`ANALISTA`** tem escopo estreito: validar CNPJ (manualmente, quando a API falhar),
+    conferir documentos e liberar acesso. **`ADMIN`** tem acesso total: altera qualquer contrato
+    ou perfil, adiciona e remove informações, gerencia catálogos e usuários internos.
+24. **Documentos do prestador (RG/CNH, comprovantes) são vistos só pelo time Serviços Já! e pelo
+    próprio prestador.** O Cliente vê apenas **foto do perfil, habilidades e "sobre"**.
+25. **Login é por email**, para todos os papéis. CNPJ e CPF viram atributos, não credenciais;
+    login por documento vai para o **backlog**.
+
+> ⚠️ A decisão 25 **substitui** a decisão 19 na parte da credencial. O que permanece da 19 é
+> **um login por empresa** — vários usuários por empresa continuam no backlog.
+> **Conflito com o design**: o Figma mostra "Conta: CNPJ · Senha" em `/client/profile/{uuid}` e
+> "Conta: CPF · Senha" em `/provider/profile/{uuid}`. Os dois blocos precisam virar email.
+
+→ A **matriz de permissões completa** está em `PRD.md` §3.6.
+
 ### Ainda em aberto
 - **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões
   configurável? *(adiado: "vamos verificar depois")*
-- **Fronteira `ADMIN` × `ANALISTA`** — o que o analista não pode?
-- **Visibilidade de dados** — quem vê RG/CNH e comprovantes do prestador (LGPD)
-- **Campo de login** — o Figma tem uma tela de login só, mas três tipos de credencial
-  (CNPJ, CPF, email)
+- ⚠️ **Canal de contato cliente ↔ prestador** — o chat saiu do escopo e o cliente não vê
+  contato nem documentos. Depois da seleção as partes não têm como combinar horário e acesso
+  à obra.
+- **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de lançamento
+  compensatório para alteração financeira pós-seleção.
 - **Ações por estado do contrato** — editar/cancelar em `Rascunho` ≠ em `Em Execução`

@@ -31,10 +31,10 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 - **Autenticação**: Spring Security + **JWT**, senhas em **BCrypt**
 - **Autorização**: por **Roles**. 4 papéis: `ADMIN` · `ANALISTA` · `CLIENTE` · `PRESTADOR`.
   Mecanismo (enum vs tabela de permissões) a definir.
-- **Login conforme o Figma**: **CNPJ** (Cliente) · **CPF** (Prestador) · email (interno).
-  **Um login por empresa.** Vários usuários por empresa com login por email → backlog
+- **Login: email + senha** para todos os papéis. CNPJ e CPF são atributos, não credenciais
+  (login por documento → backlog). **Um login por empresa.**
 - **Interfaces**: Site institucional · App do Cliente · App do Prestador · Admin (backlog)
-- **~17 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
+- **~18 tabelas**, transações **ACID** obrigatórias em toda movimentação de crédito
 - **Testes**: JUnit 5 + Jest, **cobertura mínima de 70% — requisito de entrega**
 
 ❌ **Sem WebSocket / chat** — saiu do escopo v1.
@@ -74,6 +74,11 @@ Errar qualquer uma destas quebra o produto:
 9. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
 10. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
 11. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
+    `Pendente` navega (vê mural e perfis, completa o cadastro) mas **não transaciona**.
+12. **O Cliente nunca vê documentos do prestador** (RG/CNH, comprovantes). Vê só foto,
+    habilidades e "sobre". Documentos: só o time Serviços Já! e o próprio prestador.
+13. **Toda ação de `ADMIN` é auditada** (`log_auditoria`). Alteração financeira depois da
+    seleção gera lançamento compensatório no extrato, nunca edição silenciosa.
 
 ---
 
@@ -134,11 +139,11 @@ modelagem, permissões e convenções.
 ## Pendências que Bloqueiam Implementação
 
 - **Mecanismo de autorização** — enum `role` + `@PreAuthorize` ou tabela de permissões?
-- **Fronteira `ADMIN` × `ANALISTA`** — o que o analista não pode fazer?
-- **Visibilidade dos documentos pessoais do prestador** (RG/CNH) — LGPD
-- **Campo de login** — um campo que aceita CNPJ/CPF/email, ou o usuário escolhe o tipo?
+- **Canal de contato cliente ↔ prestador** — sem chat e sem dados de contato, as partes não
+  têm como se falar depois da seleção.
+- **Backend desatualizado** — `Servco-Ja-Back` carrega cópias do PRD v1.0 e do CLAUDE.md antigo.
 
-É a **única** pendência que ainda bloqueia o diagrama ER. Ver `@PRD.md` §9 para o resto.
+A matriz de permissões está em `@PRD.md` §3.6. Ver `@PRD.md` §9 para o resto.
 
 ---
 

@@ -127,22 +127,28 @@ Implicações:
 
 ### 3.1 Papéis internos da plataforma — **ADMIN** e **ANALISTA**
 - **Quem**: time de operação do Serviços Já!
-- **`ANALISTA`** — operacional: validar CNPJ, conferir documentos do prestador,
-  liberar/bloquear acesso
-- **`ADMIN`** — tudo do analista **mais**: gerenciar usuários internos, catálogos
-  (tipos de serviço, cursos, habilidades) e auditoria financeira
-- *(divisão exata de responsabilidades a fechar — §9)*
+- **`ANALISTA`** — escopo **estreito e operacional**: validar CNPJ (**manualmente, quando a API
+  de consulta falhar**), conferir os documentos do prestador e **liberar acesso**. Nada além disso.
+- **`ADMIN`** — **acesso total ao sistema**: tudo do analista, mais alterar qualquer contrato ou
+  perfil, **adicionar e remover informações**, gerenciar catálogos e usuários internos, e
+  auditoria financeira.
+
+> ⚠️ O `ADMIN` edita contratos que já têm dinheiro reservado e dias apurados. Mexer em
+> `valor_total`, `percentual_taxa` ou nos dias de um contrato em execução corrompe a reserva de
+> crédito e a apuração mensal. **Toda ação de ADMIN precisa ser auditada** (`log_auditoria`) e
+> alterações financeiras após a seleção do prestador devem gerar **lançamento compensatório** no
+> extrato, nunca edição silenciosa. Ver §9.
 - **Tela `/admin`**: ⏸️ **backlog** — será a tela inicial dos Administradores com dados da
   plataforma. Não há frame desenhado ainda.
 
 ### 3.2 Cliente (Empresa Contratante)
 - **Quem**: empresas que precisam de mão de obra
-- **Identificação e login**: **CNPJ + senha** — conforme o Figma
+- **Identificação da empresa**: **CNPJ** (atributo, não credencial)
+- **Login**: **email + senha**
 - ❗ **Um login por empresa** no MVP. O campo "Responsável" do perfil é um dado da empresa,
   não um segundo usuário.
-- ⏸️ **Backlog**: vários usuários por empresa, com login por **email** e papéis distintos
-  (`CLIENTE_ADMIN` / `CLIENTE_ANALISTA`). Exige mudar a credencial e criar telas de gestão de
-  equipe — ver §8.
+- ⏸️ **Backlog**: vários usuários por empresa, com papéis distintos (`CLIENTE_ADMIN` /
+  `CLIENTE_ANALISTA`) e telas de gestão de equipe — ver §8.
 - **Fluxo**: cadastro → validação de CNPJ → compra de créditos → publicação de contrato →
   seleção de prestador → acompanhamento da execução → aprovação da NF
 
@@ -154,17 +160,53 @@ Implicações:
 
 ### 3.4 Papéis (roles)
 
-| Papel | Escopo | Login | Quem é |
-|---|---|---|---|
-| `ADMIN` | plataforma | email | time Serviços Já! — acesso total |
-| `ANALISTA` | plataforma | email | time Serviços Já! — validação e liberação de acesso |
-| `CLIENTE` | uma empresa | **CNPJ** | a empresa contratante (login único) |
-| `PRESTADOR` | ele mesmo | **CPF** | profissional individual |
+| Papel | Escopo | Quem é |
+|---|---|---|
+| `ADMIN` | plataforma | time Serviços Já! — acesso total |
+| `ANALISTA` | plataforma | time Serviços Já! — validação de CNPJ, documentos e liberação |
+| `CLIENTE` | uma empresa | a empresa contratante (**login único por empresa**) |
+| `PRESTADOR` | ele mesmo | profissional individual |
 
 **4 papéis no MVP**, com `role` numa única entidade `usuario` — não herança de classes.
 A hierarquia de 5 classes da Sessão 1 (`SystemAnalyst`/`SystemAdm`/`CompanyAnalyst`/
 `CompanyAdm`/`Provider`) fica sem os dois papéis intra-empresa, que foram para o backlog (§8).
 *(Mecanismo de autorização ainda não decidido — §9.)*
+
+**Login: email + senha para todos os papéis.** CNPJ e CPF são atributos da empresa e do
+prestador, **não credenciais** — login por documento vai para o backlog (§8).
+
+> ⚠️ **Conflito com o design**: o Figma mostra "Conta: CNPJ · Senha" em
+> `/client/profile/{uuid}` e "Conta: CPF · Senha" em `/provider/profile/{uuid}`. Com login por
+> email, esses dois blocos precisam ser ajustados no Figma.
+
+### 3.6 Matriz de Permissões
+
+| Ação | `ADMIN` | `ANALISTA` | `CLIENTE` | `PRESTADOR` |
+|---|:---:|:---:|:---:|:---:|
+| Validar CNPJ / conferir documentos | ✅ | ✅ | — | — |
+| Liberar / bloquear acesso | ✅ | ✅ | — | — |
+| Gerenciar catálogos (tipo de serviço, curso, habilidade) | ✅ | — | — | — |
+| Gerenciar usuários internos | ✅ | — | — | — |
+| Alterar qualquer contrato ou perfil, add/remover dados | ✅ | — | — | — |
+| Auditoria financeira da plataforma | ✅ | — | — | — |
+| Comprar créditos | ✅¹ | — | ✅ | — |
+| Criar e publicar contrato | ✅¹ | — | ✅ | — |
+| Selecionar prestador *(reserva crédito)* | ✅¹ | — | ✅ | — |
+| Registrar falta | ✅¹ | — | ✅ | — |
+| Aprovar a remoção da falta | — | — | — | ✅ |
+| Ver o mural de oportunidades | ✅ | ✅ | — | ✅ |
+| Candidatar-se a contrato | — | — | — | ✅ |
+| Emitir / anexar Nota Fiscal | ✅¹ | — | — | ✅ |
+| Aprovar Nota Fiscal *(libera pagamento)* | ✅¹ | — | ✅ | — |
+| Ver RG/CNH e comprovantes do prestador | ✅ | ✅ | ❌ | ✅² |
+| Ver foto, habilidades e "sobre" do prestador | ✅ | ✅ | ✅ | ✅ |
+
+¹ por ser acesso total; ação em nome de terceiro **exige registro em `log_auditoria`**
+² apenas os próprios documentos
+
+**Escopo por registro**: o `CLIENTE` só enxerga os **próprios** contratos, créditos e
+candidaturas; o `PRESTADOR` só os contratos em que se candidatou ou foi selecionado, e o
+próprio perfil.
 
 ### 3.5 Status de acesso
 Todo usuário tem `Pendente` · `Liberado` · `Bloqueado`, determinado pela **validação do CNPJ**.
@@ -178,7 +220,7 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 
 ### 4.1 Autenticação e Cadastro
 - [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
-- [ ] Credencial conforme o perfil: **CNPJ** (Cliente) · **CPF** (Prestador) · email (interno)
+- [ ] **Credencial: email + senha** para todos os papéis (login por CNPJ/CPF → backlog, §8)
 - [ ] Cadastro de Cliente B2B (`/register/client`)
 - [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
       de privacidade
@@ -189,7 +231,7 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 - [ ] Login social *(previsto no design — "ou use sua conta vinculada"; ver §9)*
 
 ### 4.2 Perfil do Cliente (`/client/profile/{uuid}`)
-- [ ] **Conta**: ID sequencial autogerado · CNPJ · senha · status de acesso
+- [ ] **Conta**: ID sequencial autogerado · **email (login)** · CNPJ · senha · status de acesso
 - [ ] **Foto do perfil** (upload)
 - [ ] **Dados Gerais**: nome da empresa · segmento de atuação · tipos de profissional de
       interesse · responsável · telefone · email corporativo · data do cadastro
@@ -200,13 +242,18 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 - [ ] **Sobre**: biografia da empresa
 
 ### 4.3 Perfil do Prestador (`/provider/profile/{uuid}`)
-- [ ] **Conta**: ID sequencial autogerado · CPF · senha · status de acesso
+- [ ] **Conta**: ID sequencial autogerado · **email (login)** · CPF · senha · status de acesso
 - [ ] **Foto do perfil** (upload)
 - [ ] **Dados Gerais**: nome completo · email · telefone · endereço · cidade · estado ·
       aceite de termos · "já tem CNPJ?" · data do cadastro
-- [ ] **Documentação**: CNPJ · status do CNPJ · razão social · CNAE principal + descrição ·
-      atividades secundárias · **documento de identificação (RG ou CNH)** ·
+- [ ] **Documentação** *(visível só para o time Serviços Já! e para o próprio prestador)*:
+      CNPJ · status do CNPJ · razão social · CNAE principal + descrição · atividades
+      secundárias · **documento de identificação (RG ou CNH)** ·
       **documentos de experiência** (anexos)
+
+> 🔒 **O Cliente nunca vê os documentos do prestador.** Vê apenas **foto do perfil, habilidades
+> e "sobre"**. A plataforma **atesta** a validação em vez de repassar dado pessoal sensível —
+> postura mais defensável em LGPD.
 - [ ] **Habilidades**: áreas de atuação · nível de conhecimento por área ·
       "já atuou como terceirizado?"
 - [ ] **Contratos**: histórico
@@ -372,9 +419,10 @@ Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 | `conta_credito` | saldo disponível e **saldo reservado** do cliente |
 | `transacao_credito` | extrato: `COMPRA`, `RESERVA_SERVICO`, `RESERVA_TAXA`, `LIBERACAO_PRESTADOR`, `COBRANCA_TAXA`, `ESTORNO` |
 | `nota_fiscal` | anexo, data de emissão, data de aprovação |
+| `log_auditoria` | quem fez o quê, quando e sobre qual registro — obrigatório para toda ação de `ADMIN` |
 | `apuracao_taxa_mensal` | por cliente/mês: dias agenciados apurados (agregação de `dia_contrato`) e **faixa vigente no mês seguinte** |
 
-**~17 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
+**~18 tabelas.** Convenções em `CLAUDE.md`. Transações ACID obrigatórias em toda movimentação
 de crédito.
 
 ---
@@ -403,10 +451,10 @@ O projeto será considerado **completo** quando:
 ## 8. Fora do Escopo v1 / Backlog
 
 ### Adiado em 15/09/2026
+- ⏸️ **Login por CNPJ / CPF**. No MVP a credencial é **email + senha** para todos os papéis.
 - ⏸️ **Vários usuários por empresa cliente**, com papéis distintos (`CLIENTE_ADMIN` /
-  `CLIENTE_ANALISTA`). Exige trocar a credencial de **CNPJ** para **email**, criar o vínculo
-  `usuario_cliente`, fluxo de convite e telas de gestão de equipe — nada disso existe no Figma.
-  No MVP vale **um login por empresa**.
+  `CLIENTE_ANALISTA`). Exige o vínculo `usuario_cliente`, fluxo de convite e telas de gestão de
+  equipe — nada disso existe no Figma. No MVP vale **um login por empresa**.
 
 ### Removido do MVP em 15/09/2026 (estava na v1.0, não existe no design)
 - ❌ **Chat integrado** entre cliente e prestador (WebSocket)
@@ -436,12 +484,13 @@ O projeto será considerado **completo** quando:
 ### Bloqueiam a modelagem do banco
 - [ ] **Mecanismo de autorização**: enum `role` + `@PreAuthorize`, ou tabela de permissões
       configurável? *(adiado na Sessão 3 — "vamos verificar depois")*
-- [ ] **Fronteira `ADMIN` × `ANALISTA`** — o que o analista **não** pode fazer.
-- [ ] **Campo de login em `/login`** — um único campo que aceita CNPJ, CPF ou email, ou o
-      usuário escolhe o tipo de credencial? O Figma tem uma tela de login só.
-- [ ] **Visibilidade de dados** — quem pode ver os documentos pessoais do prestador
-      (RG/CNH, comprovantes). Dado sensível: LGPD.
-*(Nada mais bloqueia o ER além da matriz de permissões.)*
+- [ ] ⚠️ **Canal de contato cliente ↔ prestador.** O chat saiu do escopo e o cliente não vê os
+      documentos nem os dados de contato do prestador. Depois da seleção, **as duas partes não
+      têm como se falar** para combinar horário, local e acesso à obra.
+      Opções: liberar telefone/email do prestador ao cliente após a seleção; ou expor os dados
+      da obra no contrato e deixar o contato fora da plataforma.
+- [ ] **Auditoria das ações de `ADMIN`** — confirmar `log_auditoria` e a regra de que alteração
+      financeira após a seleção gera lançamento compensatório, nunca edição silenciosa.
 
 ### Regras a definir
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
