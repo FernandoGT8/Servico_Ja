@@ -558,9 +558,19 @@ O projeto será considerado **completo** quando:
 
 ## 12. Referências
 
-- **`Figma.log`** — mapeamento completo do design (fonte de verdade do modelo de negócio)
+- **`Figma.log`** — mapeamento do design e histórico de todas as decisões
 - **`CLAUDE.md`** — convenções de código e regras de trabalho
-- **Figma**: `ONnLf1dmAXa8SsZfIzYd4p`
+- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend e ordem de correção
+- **Figma**: `ONnLf1dmAXa8SsZfIzYd4p` — protótipo
+
+### Repositórios
+| Repo | Conteúdo |
+|---|---|
+| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `Figma.log`, `BACKEND_ANALISE.md` |
+| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos documentos |
+
+⚠️ Ao mudar uma regra de negócio, atualize **os dois repositórios no mesmo dia**. Foi a
+divergência entre eles que fez o backend nascer sobre o modelo errado.
 
 ---
 

@@ -149,7 +149,11 @@ modelagem, permissões e convenções.
 - **Canal de contato cliente ↔ prestador** — sem chat e sem dados de contato, as partes não
   têm como se falar depois da seleção.
 - **Backend** (`Servco-Ja-Back`) — ver `@BACKEND_ANALISE.md`: segurança desligada
-  (`permitAll()`), credenciais commitadas, modelo de 1 tabela, zero testes.
+  (`permitAll()`), credenciais commitadas no GitHub, modelo de 1 tabela, zero testes.
+  A documentação já foi sincronizada lá (branch `update-info`); o código, não.
+
+⚠️ **Dois repositórios, mesma documentação.** `PRD.md`, `Figma.log` e `BACKEND_ANALISE.md` têm
+cópia em `Servco-Ja-Back`. Mudou regra de negócio? Atualize os dois no mesmo dia.
 
 A matriz de permissões está em `@PRD.md` §3.6. Ver `@PRD.md` §9 para o resto.
 
