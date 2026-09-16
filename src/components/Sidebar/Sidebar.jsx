@@ -1,4 +1,17 @@
+import { useState } from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
+import {
+  Home,
+  LayoutDashboard,
+  TrendingUp,
+  FileText,
+  Users,
+  Settings,
+  User,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
 import { getHomeRoute, getProfileRoute } from "@/utils/roleRoutes";
 
@@ -6,150 +19,6 @@ import { getHomeRoute, getProfileRoute } from "@/utils/roleRoutes";
 // (o mural de oportunidades). Cliente/Admin/Analista ainda não têm rota.
 function getContractsTarget(tipo) {
   return tipo === "PRESTADOR" ? "/provider/opportunities" : null;
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 11l9-8 9 8" />
-      <path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
-    </svg>
-  );
-}
-
-function DashboardIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 20V10m6 10V4m6 16v-7" />
-    </svg>
-  );
-}
-
-function AnalyticsIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 17l6-6 4 4 8-8" />
-      <path d="M14 6h7v7" />
-    </svg>
-  );
-}
-
-function ContractsIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M14 3v5h5M9 13h6M9 17h6" />
-    </svg>
-  );
-}
-
-function UsersIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
-
-function AccountIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function LogoutIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h4m7-4l4-4m0 0l-4-4m4 4H9" />
-    </svg>
-  );
 }
 
 function SidebarItem({ label, to, icon: Icon }) {
@@ -161,7 +30,7 @@ function SidebarItem({ label, to, icon: Icon }) {
           title="Em breve"
           className="flex cursor-not-allowed items-center gap-3 whitespace-nowrap rounded-xl border-l-2 border-transparent px-6 py-4 text-sm font-semibold text-(--color-muted-light)"
         >
-          <Icon />
+          <Icon className="h-5 w-5 shrink-0" />
           {label}
           <span className="ml-auto hidden text-[10px] font-bold uppercase tracking-wide md:inline">
             Em breve
@@ -183,10 +52,41 @@ function SidebarItem({ label, to, icon: Icon }) {
           }`
         }
       >
-        <Icon />
+        <Icon className="h-5 w-5 shrink-0" />
         {label}
       </NavLink>
     </li>
+  );
+}
+
+function BottomBarLink({ label, to, icon: Icon }) {
+  if (!to) {
+    return (
+      <span
+        aria-disabled="true"
+        title="Em breve"
+        className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-full text-(--color-muted-light)"
+      >
+        <Icon className="h-6 w-6" />
+        <span className="sr-only">{label}</span>
+      </span>
+    );
+  }
+
+  return (
+    <NavLink
+      to={to}
+      aria-label={label}
+      className={({ isActive }) =>
+        `flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+          isActive
+            ? "bg-(--color-accent-bg) text-(--color-accent)"
+            : "text-(--color-heading) hover:bg-(--bg-subtle)"
+        }`
+      }
+    >
+      <Icon className="h-6 w-6" />
+    </NavLink>
   );
 }
 
@@ -194,10 +94,13 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const { uuid } = useParams();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isInternal = user?.tipo === "ADMIN" || user?.tipo === "ANALISTA";
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const handleLogout = () => {
+    closeMobileMenu();
     logout();
     navigate("/login");
   };
@@ -207,62 +110,134 @@ export default function Sidebar() {
   // (PRD §3.6 — ANALISTA não gerencia usuários internos).
   const primaryItems = isInternal
     ? [
-        { label: "Dashboard", to: "/dashboard", icon: DashboardIcon },
-        { label: "Analytics", to: null, icon: AnalyticsIcon },
-        { label: "Contratos", to: null, icon: ContractsIcon },
+        { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+        { label: "Analytics", to: null, icon: TrendingUp },
+        { label: "Contratos", to: null, icon: FileText },
         ...(user?.tipo === "ADMIN"
-          ? [{ label: "Usuários", to: null, icon: UsersIcon }]
+          ? [{ label: "Usuários", to: null, icon: Users }]
           : []),
       ]
     : [
-        { label: "Home", to: getHomeRoute(user?.tipo, uuid), icon: HomeIcon },
+        { label: "Home", to: getHomeRoute(user?.tipo, uuid), icon: Home },
         {
           label: "Contratos",
           to: getContractsTarget(user?.tipo),
-          icon: ContractsIcon,
+          icon: FileText,
         },
       ];
 
   const accountItems = [
-    { label: "Configurações", to: null, icon: SettingsIcon },
+    { label: "Configurações", to: null, icon: Settings },
     {
       label:
         !isInternal && user?.tipo === "PRESTADOR" ? "Meu Perfil" : "Minha Conta",
       to: isInternal ? null : getProfileRoute(user?.tipo, uuid),
-      icon: AccountIcon,
+      icon: User,
     },
   ];
 
+  const homeItem = primaryItems[0];
+  const contractsItem = primaryItems.find((item) => item.label === "Contratos");
+  const accountItem = accountItems[accountItems.length - 1];
+
   return (
-    <aside className="w-full shrink-0 rounded-2xl bg-(--bg-card) px-5 py-6 md:w-72.5">
-      <nav
-        aria-label="Navegação da conta"
-        className="flex flex-row items-center gap-1 overflow-x-auto md:flex-col md:items-stretch md:gap-6 md:overflow-visible"
-      >
-        <ul className="flex flex-row gap-1 md:flex-col md:gap-0">
-          {primaryItems.map((item) => (
-            <SidebarItem key={item.label} {...item} />
-          ))}
-        </ul>
+    <>
+      {/* Desktop/tablet: coluna fixa de navegação */}
+      <aside className="hidden shrink-0 rounded-2xl bg-(--bg-card) px-5 py-6 md:block md:w-72.5">
+        <nav aria-label="Navegação da conta" className="flex flex-col gap-6">
+          <ul className="flex flex-col gap-0">
+            {primaryItems.map((item) => (
+              <SidebarItem key={item.label} {...item} />
+            ))}
+          </ul>
 
-        <div className="hidden h-px w-full bg-(--color-border-subtle) md:block" />
+          <div className="h-px w-full bg-(--color-border-subtle)" />
 
-        <ul className="flex flex-row gap-1 md:flex-col md:gap-0">
-          {accountItems.map((item) => (
-            <SidebarItem key={item.label} {...item} />
-          ))}
-          <li>
+          <ul className="flex flex-col gap-0">
+            {accountItems.map((item) => (
+              <SidebarItem key={item.label} {...item} />
+            ))}
+            <li>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 whitespace-nowrap rounded-xl border-l-2 border-transparent px-6 py-4 text-left text-sm font-semibold text-(--color-heading) transition-colors hover:bg-(--bg-subtle)"
+              >
+                <LogOut className="h-5 w-5 shrink-0" />
+                Sair
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      {/* Mobile: barra fixa no rodapé no lugar da Sidebar */}
+      <div className="fixed inset-x-4 bottom-4 z-50 md:hidden">
+        <nav
+          aria-label="Navegação da conta"
+          className="flex h-20 items-center justify-around rounded-full border border-(--color-border-subtle) bg-(--bg-card) px-6 shadow-lg"
+        >
+          <BottomBarLink {...homeItem} />
+          <BottomBarLink {...contractsItem} />
+          <BottomBarLink {...accountItem} />
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMobileMenuOpen}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-(--color-heading) transition-colors hover:bg-(--bg-subtle)"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </nav>
+      </div>
+
+      {/* Mobile: menu completo, aberto pelo botão acima */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-60 flex flex-col gap-6 overflow-y-auto bg-white px-5 pt-8 pb-28 md:hidden">
+          <div className="flex items-center justify-between">
+            <span className="font-dm-sans text-lg font-bold text-(--color-heading)">
+              Menu
+            </span>
             <button
               type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 whitespace-nowrap rounded-xl border-l-2 border-transparent px-6 py-4 text-left text-sm font-semibold text-(--color-heading) transition-colors hover:bg-(--bg-subtle)"
+              onClick={closeMobileMenu}
+              aria-label="Fechar menu"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-(--color-heading) hover:bg-(--bg-subtle)"
             >
-              <LogoutIcon />
-              Sair
+              <X className="h-5 w-5" />
             </button>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+          </div>
+
+          <ul className="flex flex-col gap-0" onClick={closeMobileMenu}>
+            {primaryItems.map((item) => (
+              <SidebarItem key={item.label} {...item} />
+            ))}
+          </ul>
+
+          <div className="h-px w-full bg-(--color-border-subtle)" />
+
+          <ul className="flex flex-col gap-0" onClick={closeMobileMenu}>
+            {accountItems.map((item) => (
+              <SidebarItem key={item.label} {...item} />
+            ))}
+            <li>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 whitespace-nowrap rounded-xl border-l-2 border-transparent px-6 py-4 text-left text-sm font-semibold text-(--color-heading) transition-colors hover:bg-(--bg-subtle)"
+              >
+                <LogOut className="h-5 w-5 shrink-0" />
+                Sair
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
+    </>
   );
 }

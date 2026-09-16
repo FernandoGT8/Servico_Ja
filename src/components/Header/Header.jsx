@@ -1,67 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { Star, User, Menu, X, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
-
-const STAR_PATH =
-  "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
-const PERSON_PATH = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/business", label: "Sou Empresa" },
   { to: "/partners", label: "Sou Profissional" },
 ];
-
-function StarIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d={STAR_PATH} />
-    </svg>
-  );
-}
-
-function PersonIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={PERSON_PATH} />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function MenuIcon({ open, className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      {open ? (
-        <path d="M6 6l12 12M18 6L6 18" />
-      ) : (
-        <path d="M4 7h16M4 12h16M4 17h16" />
-      )}
-    </svg>
-  );
-}
 
 function LogoBadge() {
   return (
@@ -70,7 +16,7 @@ function LogoBadge() {
       aria-label="Logo"
       className="inline-flex shrink-0 items-center justify-center gap-3 rounded-full bg-gray-200 px-6 py-4 transition-colors hover:bg-gray-300"
     >
-      <StarIcon className="h-3.5 w-3.5 shrink-0 text-zinc-800" />
+      <Star className="h-3.5 w-3.5 shrink-0 text-zinc-800" fill="currentColor" />
       <span className="font-dm-sans text-base font-bold leading-4 tracking-wide text-zinc-800">
         LOGO
       </span>
@@ -164,7 +110,7 @@ export default function Header() {
                   aria-label="Fechar menu"
                   className="flex h-8 w-8 items-center justify-center text-slate-500"
                 >
-                  <MenuIcon open className="h-5 w-5" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -228,7 +174,7 @@ export default function Header() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <PersonIcon className="absolute inset-0 m-auto h-6 w-6 text-white" />
+                    <User className="absolute inset-0 m-auto h-6 w-6 text-white" />
                   )}
                 </span>
                 <span className="hidden w-28 flex-col items-center gap-1.5 sm:flex">
@@ -237,9 +183,10 @@ export default function Header() {
                   </span>
                   <span className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <StarIcon
+                      <Star
                         key={i}
                         className={`h-4 w-4 ${i < (user.avaliacao || 0) ? "text-amber-400" : "text-gray-300"}`}
+                        fill="currentColor"
                       />
                     ))}
                   </span>
@@ -256,7 +203,7 @@ export default function Header() {
                     }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-gray-50 hover:text-zinc-900"
                   >
-                    <PersonIcon className="h-4.5 w-4.5 shrink-0" />
+                    <User className="h-4.5 w-4.5 shrink-0" />
                     Meu Perfil
                   </a>
                   <a
@@ -267,17 +214,7 @@ export default function Header() {
                     }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:bg-gray-50 hover:text-zinc-900"
                   >
-                    <svg
-                      className="h-4.5 w-4.5 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <circle cx="12" cy="12" r="1" />
-                      <path d="M12 1v6m0 6v4M4.22 4.22l4.24 4.24m2.84 2.84l4.24 4.24M1 12h6m6 0h4M4.22 19.78l4.24-4.24m2.84-2.84l4.24-4.24M19.78 19.78l-4.24-4.24m-2.84-2.84l-4.24-4.24" />
-                    </svg>
+                    <Settings className="h-4.5 w-4.5 shrink-0" />
                     Configurações
                   </a>
                   <hr className="my-2 border-gray-200" />
@@ -286,16 +223,7 @@ export default function Header() {
                     onClick={handleLogout}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
                   >
-                    <svg
-                      className="h-4.5 w-4.5 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h4m7-4l4-4m0 0l-4-4m4 4H9" />
-                    </svg>
+                    <LogOut className="h-4.5 w-4.5 shrink-0" />
                     Sair
                   </button>
                 </div>
@@ -306,7 +234,7 @@ export default function Header() {
               to="/login"
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-base font-bold leading-4 text-slate-500 transition-colors hover:bg-white hover:text-zinc-800"
             >
-              <PersonIcon className="h-5 w-5 shrink-0" />
+              <User className="h-5 w-5 shrink-0" />
               <span className="hidden lg:inline">Login</span>
             </Link>
           )}
@@ -321,10 +249,11 @@ export default function Header() {
             }
             aria-expanded={isAuthenticated ? isUserMenuOpen : isMenuOpen}
           >
-            <MenuIcon
-              open={isAuthenticated ? isUserMenuOpen : isMenuOpen}
-              className="h-6 w-6 text-slate-500"
-            />
+            {(isAuthenticated ? isUserMenuOpen : isMenuOpen) ? (
+              <X className="h-6 w-6 text-slate-500" />
+            ) : (
+              <Menu className="h-6 w-6 text-slate-500" />
+            )}
           </button>
         </div>
       </div>

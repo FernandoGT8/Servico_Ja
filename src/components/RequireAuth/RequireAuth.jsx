@@ -56,7 +56,8 @@ export default function RequireAuth({ allowedRoles }) {
   return (
     <div className="flex w-full flex-col gap-8 md:flex-row md:items-start">
       <Sidebar />
-      <div className="w-full min-w-0 flex-1">
+      {/* pb extra no mobile: a barra de navegação da Sidebar flutua fixa no rodapé */}
+      <div className="w-full min-w-0 flex-1 pb-28 md:pb-0">
         <Outlet />
       </div>
     </div>
