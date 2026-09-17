@@ -1,0 +1,17 @@
+// Constantes e funções puras usadas pelos átomos de ClientBillingFields.jsx —
+// separadas em arquivo próprio porque react-refresh/only-export-components
+// não deixa misturar componentes com outros exports no mesmo módulo (mesma
+// convenção de clientProfileFieldsUtils.js/contractFormUtils.js).
+export const inputClassName =
+  "w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-(--color-heading) outline outline-2 -outline-offset-2 outline-(--color-border-subtle) transition-colors placeholder:text-(--color-muted) focus:outline-(--color-accent) disabled:cursor-not-allowed disabled:bg-(--bg-subtle) disabled:text-(--color-muted)";
+export const labelClassName =
+  "text-xs font-bold uppercase tracking-wide text-(--color-muted-light)";
+export const primaryButtonClassName =
+  "rounded-full bg-(--color-heading) px-6 py-4 text-sm font-bold font-dm-sans text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
+export const secondaryButtonClassName =
+  "rounded-full border border-(--color-border-subtle) px-6 py-4 text-sm font-bold font-dm-sans text-(--color-heading) transition-colors hover:bg-(--bg-subtle)";
+
+export function formatDataHoraBR(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("pt-BR");
+}

@@ -17,5 +17,11 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Handlers que só existem como TODO até o backend ter o endpoint (ex.:
+      // callbacks de modal já plugados, mas sem corpo real ainda) recebem o
+      // parâmetro com prefixo `_` em vez de silenciar o lint por completo.
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
   },
 ])

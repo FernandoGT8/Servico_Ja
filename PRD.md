@@ -191,9 +191,10 @@ prestador, **não credenciais** — login por documento vai para o backlog (§8)
 | Liberar / bloquear acesso | ✅ | ✅ | — | — |
 | Gerenciar catálogos (tipo de serviço, curso, habilidade) | ✅ | — | — | — |
 | Gerenciar usuários internos | ✅ | — | — | — |
-| Alterar qualquer contrato ou perfil, add/remover dados | ✅ | — | — | — |
+| Alterar qualquer contrato ou perfil, add/remover dados³ | ✅ | — | — | — |
 | Auditoria financeira da plataforma | ✅ | — | — | — |
 | Comprar créditos | ✅¹ | — | ✅ | — |
+| Conceder créditos bônus ao Cliente *(sem cobrança)* | ✅ | — | — | — |
 | Criar e publicar contrato | ✅¹ | — | ✅ | — |
 | Selecionar prestador *(reserva crédito)* | ✅¹ | — | ✅ | — |
 | Registrar falta | ✅¹ | — | ✅ | — |
@@ -204,9 +205,15 @@ prestador, **não credenciais** — login por documento vai para o backlog (§8)
 | Aprovar Nota Fiscal *(libera pagamento)* | ✅¹ | — | ✅ | — |
 | Ver RG/CNH e comprovantes do prestador | ✅ | ✅ | ❌ | ✅² |
 | Ver foto, habilidades e "sobre" do prestador | ✅ | ✅ | ✅ | ✅ |
+| Ver contato do Cliente *(nome, responsável, telefone, email)* | ✅ | ✅ | — | ✅⁴ |
 
 ¹ por ser acesso total; ação em nome de terceiro **exige registro em `log_auditoria`**
 ² apenas os próprios documentos
+³ inclui **"Editar Perfil"/"Salvar"** em `/client/profile/{uuid}` — o `ANALISTA` não tem essa
+  ação nessa tela (confirmado em conversa, 17/09/2026); seu escopo ali é só "Validar CNPJ" e
+  "Liberar/bloquear acesso" (linhas acima), ver `Figma.log` Sessão 7
+⁴ só enquanto **selecionado e com contrato ativo** com esse Cliente — não antes da seleção, não
+  depois de `Cancelado` (ver §4.3, `Figma.log` Sessão 8)
 
 **Escopo por registro**: o `CLIENTE` só enxerga os **próprios** contratos, créditos e
 candidaturas; o `PRESTADOR` só os contratos em que se candidatou ou foi selecionado, e o
@@ -218,6 +225,18 @@ Todo usuário tem `Pendente` · `Liberado` · `Bloqueado`, determinado pela **va
 **`Pendente` = navega, mas não transaciona.** Pode fazer login, ver o mural e perfis e
 completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se nem comprar crédito.
 
+**Critério de liberação do Cliente** (decidido em 17/09/2026, ver `Figma.log` Sessão 7): passar
+para `Liberado` exige, além do CNPJ **ATIVO**, **Capital Social mínimo de R$ 10.000**. A ação
+que muda o status é `ADMIN`/`ANALISTA` (matriz §3.6), feita em **`/client/profile/{uuid}`** —
+"Alterar Status" (antes chamada "Liberar Cadastro", renomeada porque também **bloqueia**, não só
+libera).
+
+**Consulta de CNPJ** ("Verificar CNPJ", mesma tela): duas fontes avaliadas — **sintegrapi.com.br**
+(10 consultas grátis/mês, dado em tempo real da Receita Federal) como principal, e
+**brasilapi.com.br** (grátis, sem limite de consultas, mas com até 45 dias de atraso) como
+fallback quando o limite mensal estourar. Preenche a seção Documentação do perfil — nunca é
+editada manualmente, nem pelo `ADMIN` (regra 13/§4.5). Implementação fica a cargo do backend.
+
 ---
 
 ## 4. Funcionalidades (MVP)
@@ -225,9 +244,16 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 ### 4.1 Autenticação e Cadastro
 - [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
 - [ ] **Credencial: email + senha** para todos os papéis (login por CNPJ/CPF → backlog, §8)
-- [ ] Cadastro de Cliente B2B (`/register/client`)
-- [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
-      de privacidade
+- [ ] Cadastro de Cliente B2B em duas etapas (decisão de 17/09/2026): conta simplificada — nome,
+      telefone, email, senha, aceite de termos (`/register/client`) — e, já autenticado, perfil
+      completo — segmento, cargo, empresa, CNPJ (`/register/client/complete`).
+      **Front pronto** (`pages/FirstRegister/`, `pages/Register/`); endpoint de completar perfil
+      ainda não existe no backend — ver `@BACKEND_ANALISE.md` §8
+- [ ] Cadastro de Prestador em duas etapas: conta simplificada — nome, telefone, email, senha,
+      aceite de termos (`/register/provider`) — e, já autenticado, perfil completo — CPF,
+      CNPJ/MEI, disponibilidade, habilidades, experiência (`/register/provider/complete`).
+      **Front pronto**; endpoint de completar perfil ainda não existe no backend — ver
+      `@BACKEND_ANALISE.md` §8
 - [ ] Validação de **CNPJ** (formato + regularidade: `ATIVO` / `INAPTO` / `BAIXADO`)
 - [ ] Validação de **CPF** (prestador)
 - [ ] Validação de email (confirmação)
@@ -244,6 +270,16 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 - [ ] **Financeiro**: créditos disponíveis · taxa de serviço vigente
 - [ ] **Contratos**: histórico
 - [ ] **Sobre**: biografia da empresa
+
+> **Quem edita o quê em `/client/profile/{uuid}`** (decidido em 17/09/2026, ver `Figma.log`
+> Sessão 7): a tela tem duas visões, mais enxuta para o `CLIENTE`. "Editar Perfil"/"Salvar" é
+> **exclusivo do `ADMIN`** (o `ANALISTA` não tem essa ação aqui, matriz §3.6 nota ³): desbloqueia
+> Foto e CNPJ (Conta), todo o Dados Gerais menos data do cadastro, e Sobre — Documentação e
+> Financeiro seguem sempre travados. Para o `CLIENTE`, o mesmo botão desbloqueia Foto e Senha
+> (Conta), Dados Gerais e Sobre; CNPJ vem do cadastro e nunca é editável por ele. "Verificar
+> CNPJ" e "Alterar Status" (§3.5) são ações à parte, do `ADMIN` e do `ANALISTA`. "Adicionar
+> Créditos" bônus é exclusiva do `ADMIN` (matriz §3.6) — distinta da compra paga que o próprio
+> `CLIENTE` faz em `/client/profile/{uuid}/billing`.
 
 ### 4.3 Perfil do Prestador (`/provider/profile/{uuid}`)
 - [ ] **Conta**: ID sequencial autogerado · **email (login)** · CPF · senha · status de acesso
@@ -263,11 +299,25 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 >
 > *Aplicado a partir da **seleção** do prestador, que é o ponto onde a relação contratual nasce
 > e o contato passa a ser necessário. Se você quiser liberar já na candidatura, é só dizer.*
+
+> 🔒 **No sentido inverso, o Prestador vê o contato do Cliente** (decidido em 17/09/2026, ver
+> `Figma.log` Sessão 8) — uma terceira visão de `/client/profile/{uuid}`
+> (`ClientProfileProvider.jsx`), só com Nome, Responsável, Telefone, Email e "Sobre" da empresa,
+> tudo somente leitura, sem Conta/Documentação/Financeiro/Contratos. Alcançável **somente pelo
+> Prestador selecionado e com contrato ativo** com esse Cliente — não antes da seleção, não
+> depois de `Cancelado`. Espelha a regra acima e resolve o mesmo furo de comunicação (sem chat
+> no MVP), agora na direção Prestador → Cliente. *Janela exata de "ativo" (se some ao fim do
+> contrato ou continua após `Pago`/`Finalizado`) segue como assumida pela sessão que definiu a
+> tela — confirmar se precisar de um corte mais estrito.*
 - [ ] **Habilidades**: áreas de atuação · nível de conhecimento por área ·
       "já atuou como terceirizado?"
 - [ ] **Contratos**: histórico
 - [ ] **Sobre**: biografia do prestador
-- [ ] ❌ **Sem painel financeiro** — o prestador apenas recebe após o contrato
+- [ ] ❌ **Sem painel de gestão de crédito** — o prestador não compra crédito, não vê taxa nem
+      saldo da plataforma (isso é exclusivo do Cliente, §4.4). O dashboard (`/dashboard`) mostra
+      pra ele um **resumo de pagamentos, só leitura** — ganhos do mês, valores recebidos (NF
+      paga) e a receber (aguardando pagamento final) — decidido em 18/09/2026: não é o mesmo
+      painel financeiro do Cliente, só reflete o que ele recebe após a NF aprovada
 
 ### 4.4 Painel de Créditos (`/client/profile/{uuid}/billing`) — **exclusivo do Cliente**
 - [ ] Créditos atuais
@@ -296,13 +346,19 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
   - Pernoite em casa? · Pernoite em alojamento?
   - Transporte fornecido pela empresa? · Ferramentas fornecidas pela empresa?
   - EPI's fornecidos pela empresa? · Área de alimentação disponível?
-- [ ] **Cursos exigidos** (multi-seleção: NR-35, NR-20, Primeiros Socorros, …)
-- [ ] **Habilidades desejadas** (multi-seleção)
-- [ ] **Descrição do serviço** — texto estruturado: o que o prestador deve fornecer ·
-      tarefas e responsabilidades · proibições · regras de aceite e pagamento
+- [ ] **Cursos exigidos** (multi-seleção, catálogo do backend — ver nota abaixo)
+- [ ] **Habilidades desejadas** (multi-seleção, catálogo do backend — ver nota abaixo)
+- [ ] **Descrição do serviço** — um único campo de texto livre, cobrindo o que o prestador deve
+      fornecer, tarefas e responsabilidades, proibições e regras de aceite e pagamento (decidido
+      em 18/09/2026 — antes eram 4 campos separados; a UI simplificou para um só)
 
-#### Visualização (`/client/contracts/{uuid}`)
-Tudo acima em leitura, **mais**:
+> **Cursos e Habilidades são catálogos do backend** (decidido em 18/09/2026), no mesmo molde de
+> Tipo de Serviço: listas fechadas (`GET /api/cursos`, `GET /api/habilidades`), editáveis pelo
+> `ADMIN` numa futura página de configuração (matriz §3.6 — "Gerenciar catálogos"). Hoje são
+> constantes locais em `src/data/catalogos.js` até esses dois endpoints existirem.
+
+#### Visualização (`/contracts/{uuid}` — compartilhada entre Cliente e Prestador, ver `Figma.log` §13)
+Tudo acima em leitura, **mais** (visível só ao Cliente/`ADMIN`):
 - [ ] Percentual e **valor da taxa de serviço** (= valor total × taxa). O percentual é
       **congelado na publicação** conforme a faixa vigente do cliente (§2.2)
 - [ ] **Nota Fiscal emitida pelo prestador** (anexo) e **data de aprovação da NF**
@@ -320,7 +376,7 @@ Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados
 |---|---|
 | `valor_total` *(Diária)* | nº de diárias × valor por dia |
 | `valor_dia` *(Empreitada)* | valor total ÷ dias do período |
-| quantidade de diárias / dias de trabalho | as datas registradas em `dia_contrato` |
+| quantidade de diárias / **dias de trabalho** | Data de Início → Data de Encerramento, **menos** as datas em Dias de folga (decidido em 18/09/2026) — grava em `dia_contrato` |
 | `percentual_taxa` | faixa vigente do cliente, congelada na publicação (§2.2) |
 | `valor_taxa` | `valor_total` × `percentual_taxa` |
 | dias agenciados do mês | agregação de `dia_contrato` (§2.2) |
@@ -329,16 +385,40 @@ Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados
 
 **Campos de entrada** (editáveis conforme o papel e o estado): tipo de contrato, tipo de
 serviço, localização, datas, valor por dia *(Diária)* ou valor total *(Empreitada)*, dias de
-trabalho e folga, condições de operação, cursos, habilidades e descrição.
+folga, condições de operação, cursos, habilidades e descrição. **Dias de trabalho não está
+nesta lista** — é sempre derivado (ver tabela acima), mesmo que pareça uma lista de datas como
+Dias de folga.
 
 > A UI deve exibir os derivados como **somente leitura**, e a API deve **ignorar ou rejeitar**
 > esses campos no corpo da requisição — não basta desabilitar o input no front.
 
-### 4.6 Mural de Oportunidades (`/provider/opportunities`)
-- [ ] Listagem de contratos abertos em cards (logo da empresa, ID, tipo, descrição)
-- [ ] Filtros: **tipo de contrato** (Diária/Empreitada) e **tipo de serviço**
-- [ ] Candidatura ao contrato
-- [ ] Campo **Promocode** → ⏸️ backlog (§8)
+> **Quem edita o quê em `/contracts/{uuid}`** (decidido em 17/09/2026, ver `Figma.log` §14):
+> ser um campo de entrada não significa que todo papel o edita ali. Na tela de visualização, o
+> Cliente só altera Descrição, Cursos exigidos, Habilidades desejadas e Dias de falta; o
+> `ADMIN`/`ANALISTA` só altera Status, Tipo de Serviço, o valor de entrada (por dia ou total) e
+> a Nota Fiscal. Tipo de contrato e Localização não são editáveis por ninguém depois de
+> publicado. Dias de trabalho/folga têm ação própria ("Adicionar Dias"), separada da edição
+> geral do contrato.
+
+### 4.6 Listagem de Contratos (`/contracts`) — três visões por papel
+
+Tela única, dispatcher por papel (mesmo raciocínio de `/contracts/{uuid}`, §4.5) — front em
+`pages/Contracts/` (`ContractsAdmin`/`ContractsClient`/`ContractsProvider`, UI compartilhada em
+`ContractsFields.jsx`). Substitui o antigo `/provider/opportunities` (decisão de 17/09/2026).
+
+- [ ] **ADMIN/ANALISTA**: todos os contratos da plataforma, sem escopo por cliente. Filtros:
+      **Status** e **Tipo de contrato** (Diária/Empreitada).
+- [ ] **CLIENTE**: só os próprios contratos (escopo por registro, §3.6). Filtros: **Status** e
+      **Tipo de contrato**. Atalho **"Novo Contrato"** para `/client/contracts/new`.
+- [ ] **PRESTADOR** *(era o "Mural de Oportunidades")*: só contratos em **Aguardando
+      Prestadores** — não é um filtro escolhido pelo usuário, é sempre esse status. Filtros:
+      **Tipo de contrato**, **Tipo de serviço** e **Cidade** (Cidade adicionada em 17/09/2026 —
+      o Figma já desenhava um campo de busca por cidade/ID que não estava neste filtro).
+      Candidatura ao contrato acontece na tela de detalhe (`/contracts/{uuid}`), não aqui.
+- [ ] Campo **Promocode** *(visão do Prestador)* → ⏸️ backlog (§8)
+- [ ] **Favoritar contrato** *(visão do Prestador)* → ⏸️ backlog (§8) — o dashboard do Prestador
+      (18/09/2026) já reserva um card de "Contratos Favoritos", mas não há botão de favoritar
+      nem endpoint ainda; entra junto quando essa tela ganhar o recurso
 
 ### 4.7 Ciclo de vida do contrato
 
@@ -378,7 +458,8 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 ### 5.1 Cliente contrata
 ```
-1. Cadastro (/register/client) → validação de CNPJ → acesso Liberado
+1. Cria a conta (/register/client) → completa o perfil, já autenticado
+   (/register/client/complete) → validação de CNPJ → acesso Liberado
 2. Compra créditos (/client/profile/{uuid}/billing)
 3. Cria contrato (/client/contracts/new) → Rascunho
 4. Publica → Aguardando Prestadores
@@ -391,14 +472,15 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 ### 5.2 Prestador executa
 ```
-1. Cadastro (/register/provider) → CNPJ + documentos → acesso Liberado
-2. Completa perfil: habilidades, áreas de atuação, experiência
-3. Consulta o mural (/provider/opportunities)
-4. Candidata-se a um contrato
-5. É selecionado
-6. Executa o serviço (aprova ou contesta faltas registradas)
-7. Emite e anexa a Nota Fiscal
-8. Recebe o valor após a aprovação da NF
+1. Cria a conta (/register/provider) → completa o perfil, já autenticado
+   (/register/provider/complete): CPF, CNPJ/MEI, habilidades, áreas de atuação, experiência →
+   documentos → acesso Liberado
+2. Consulta o mural (/provider/opportunities)
+3. Candidata-se a um contrato
+4. É selecionado
+5. Executa o serviço (aprova ou contesta faltas registradas)
+6. Emite e anexa a Nota Fiscal
+7. Recebe o valor após a aprovação da NF
 ```
 
 ---
@@ -410,8 +492,9 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 | Camada | Tecnologia | Observações |
 |---|---|---|
 | **Frontend** | React + Vite | Em andamento |
-| **CSS** | Tailwind CSS | Instalado, ainda não utilizado |
-| **Roteamento** | react-router-dom v7 | Instalado, **ainda não utilizado** |
+| **CSS** | Tailwind CSS v4 | **Em uso** desde 17/09/2026 (config CSS-first, `@theme`) — telas de cadastro ainda em CSS puro por página |
+| **Roteamento** | react-router-dom v7 | **Em uso** desde 17/09/2026 (`router.jsx`, `RequireAuth`) |
+| **Ícones** | lucide-react | **Em uso** — não estava na stack original, ver `CLAUDE.md` Regra 2 |
 | **Backend** | Java + Spring Boot | API RESTful, arquitetura em camadas |
 | **Banco** | **PostgreSQL** | Modelagem relacional normalizada |
 | **Segurança** | Spring Security + JWT + BCrypt | Acesso controlado por Roles |
@@ -424,9 +507,22 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 **Site institucional**: `/` (Home + About + Details) · `/business` (Empresas) · `/partners` (Prestadores MEI)
 
-**Aplicação**: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
-`/client/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
-`/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
+**Aplicação**: `/login` · `/register/client` · `/register/client/complete` ·
+`/register/provider` · `/register/provider/complete` · `/client/contracts/new` · `/contracts` ·
+`/contracts/{uuid}` · `/client/profile/{uuid}` · `/client/profile/{uuid}/billing` ·
+`/provider/profile/{uuid}` · `/admin` *(backlog)*
+
+⚠️ **`/contracts` sem prefixo de papel** (decisão de 17/09/2026): a listagem de contratos é
+compartilhada entre ADMIN/ANALISTA, CLIENTE e PRESTADOR — dispatcher por papel, ver §4.6 —,
+mesmo raciocínio já usado em `/contracts/{uuid}`. Substitui `/provider/opportunities`, que era
+exclusiva do Prestador.
+
+⚠️ **Cadastro em duas etapas** (decisão de 17/09/2026, ver `Figma.log` Sessão 11):
+`/register/client` e `/register/provider` só criam a conta (login) — campos simplificados.
+`/register/client/complete` e `/register/provider/complete` completam o perfil, já autenticado
+(exigem login e o papel dono da conta), e não têm frame próprio no Figma — são as telas de
+cadastro completo que o design já desenhava para `/register/client`/`/register/provider`,
+só que agora acessadas depois da conta existir.
 
 Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 
@@ -498,6 +594,8 @@ O projeto será considerado **completo** quando:
 - ⏸️ **`/admin`** — tela inicial dos Administradores com dados da plataforma
 - ⏸️ **"Nível" do prestador** — reputação acumulada ao longo dos contratos executados
 - ⏸️ **Promocode** — cupom de R$ X em créditos para novos clientes testarem a plataforma
+- ⏸️ **Favoritar contrato** — botão no mural de oportunidades (§4.6) para o Prestador marcar um
+  contrato sem se candidatar ainda; sem UI, endpoint ou modelo de dados hoje
 
 ### Fora do escopo (v1)
 - App mobile nativo (web responsivo apenas)
@@ -521,6 +619,10 @@ O projeto será considerado **completo** quando:
       necessário agora que as partes se falam direto.
 
 ### Regras a definir
+- [ ] **Requisitos mínimos de senha** (tamanho, maiúscula/minúscula, número, caractere
+      especial?) — hoje o cadastro (`/register/client`, `/register/provider`) só exibe um aviso
+      estático ("requisitos mínimos") sem regra real por trás; a validação de senha coincidindo
+      é só local no front. Ver `@BACKEND_ANALISE.md` §8.
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
 - [ ] **"Experiência prévia"** como requisito do prestador: o que valida? Quem aprova?
 - [ ] **Contestação de falta**: e se o prestador **não** aprovar a remoção do dia?
@@ -558,16 +660,19 @@ O projeto será considerado **completo** quando:
 
 ## 12. Referências
 
-- **`Figma.log`** — mapeamento do design e histórico de todas as decisões
 - **`CLAUDE.md`** — convenções de código e regras de trabalho
-- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend e ordem de correção
+- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend, o que já foi implementado no
+  front e o backlog de endpoints por módulo
 - **Figma**: `ONnLf1dmAXa8SsZfIzYd4p` — protótipo
+- **`Figma.log`** — histórico de decisões e o "porquê" de cada uma. **Local, não versionado**
+  (decisão de 17/09/2026) — existe só nesta máquina, não é sincronizado entre repositórios.
+  Nenhuma regra deste PRD depende dele.
 
 ### Repositórios
 | Repo | Conteúdo |
 |---|---|
-| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `Figma.log`, `BACKEND_ANALISE.md` |
-| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos documentos |
+| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `BACKEND_ANALISE.md` |
+| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos dois documentos |
 
 ⚠️ Ao mudar uma regra de negócio, atualize **os dois repositórios no mesmo dia**. Foi a
 divergência entre eles que fez o backend nascer sobre o modelo errado.

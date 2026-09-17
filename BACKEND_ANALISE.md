@@ -3,7 +3,11 @@
 **Data**: 15/09/2026
 **Repositório**: `github.com/FernandoGT8/Servco-Ja-Back`
 **Commits**: 3 (`Primeiros passos` → `Implementar autenticação JWT` → `Atualizar configurações do banco`)
-**Referência**: `PRD.md` (fonte de verdade) · `Figma.log` (histórico de decisões)
+**Referência**: `PRD.md` (fonte de verdade das regras de negócio) · este arquivo (fonte de
+verdade do que está implementado e do backlog de endpoints). `Figma.log` (histórico de decisões
+e o "porquê" de cada uma) é **local, não versionado** — útil como contexto extra para quem tem o
+arquivo à mão, mas nenhuma regra aqui depende dele: tudo que importa para o backend está escrito
+diretamente nas seções abaixo.
 
 ---
 
@@ -205,3 +209,140 @@ base.
 Enquanto os dois repositórios tiverem specs divergentes, alguém vai codar pela versão errada.
 Decidir onde a documentação mora — repositório único, submódulo ou cópia sincronizada — antes
 de escrever mais código.
+
+---
+
+## 6. Backlog de endpoints — módulo de Contrato (17/09/2026)
+
+O front do módulo de Contrato (`ContractNew.jsx`, `ContractDetailAdmin.jsx`,
+`ContractDetailClient.jsx`, `ContractDetailProvider.jsx`) já está implementado e cada ação que
+depende do backend está marcada com `TODO` no código — nenhuma delas tem endpoint ainda. Lista
+completa, para não perder nenhuma na hora de implementar o núcleo do produto (item 7 da tabela
+da seção 4).
+
+| # | Ação (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Criar rascunho (`ContractNew`) | `POST /api/contratos` (`status: RASCUNHO`) | `CLIENTE` | Body: tipo, tipoServico, cidade, estado, datas, valor de entrada (por dia ou total), dias de folga, operação (6 booleanos), cursos, habilidades, descrição (texto único). API **calcula e ignora no request** o valor oposto, `percentualTaxa` (congelado pela faixa vigente do cliente, PRD §2.2) e **`diasTrabalho`/`quantidadeDiarias`** — regra 13. `diasTrabalho` **não é enviado pelo Cliente**: o backend deriva de Data de Início → Data de Encerramento, excluindo as datas em `diasFolga` (decidido em 18/09/2026). |
+| 2 | Publicar contrato (`ContractNew`) | mesmo endpoint, `status: AGUARDANDO_PRESTADORES` | `CLIENTE` | Mesmo body do #1; só muda o status de gravação. |
+| 3 | Buscar contrato (`ContractDetail*`, as 3 visões) | `GET /api/contratos/{uuid}` | `CLIENTE` dono · `PRESTADOR` (candidatou-se ou vendo o mural) · `ADMIN`/`ANALISTA` | **O backend deve filtrar a resposta por papel** — não mandar `percentualTaxa`/`valorTaxa`/`notaFiscal`/`candidaturas` para quem não é Cliente/Admin (hoje o front só não exibe; o certo é nem vir). |
+| 4 | Editar contrato — Cliente (`ContractDetailClient`) | `PUT/PATCH /api/contratos/{uuid}` | `CLIENTE` | Body só com o que esse papel edita: `descricao`, `cursosExigidos`, `habilidadesDesejadas`, `diasFalta`. API rejeita qualquer outro campo. |
+| 5 | Editar contrato — Admin (`ContractDetailAdmin`) | mesmo endpoint | `ADMIN`/`ANALISTA` | Body: `status` (um dos 8 estados do ciclo de vida, PRD §4.7 — **sem validação de transição no front**, o backend decide o que é permitido), `tipoServico`, o valor de entrada (por dia ou total), `notaFiscal` (upload). Toda edição de `ADMIN` gera `log_auditoria` (regra 14). |
+| 6 | Adicionar dias (`ContractDetailAdmin`/`ContractDetailClient`) | `POST /api/contratos/{uuid}/dias` | `CLIENTE` ou `ADMIN`/`ANALISTA` | Modal pede uma nova `dataEncerramento` e estende o contrato. **Regras confirmadas em 17/09/2026**: (1) permitido em qualquer status que não seja final (`Concluído`/`Pago`/`Cancelado` — front já desabilita o botão nesses casos, mas o backend deve validar de novo); (2) não altera nenhum `dia_contrato` já registrado; (3) **Diária**: `valor_total` é campo calculado, então atualiza sozinho conforme novos `dia_contrato` do tipo `TRABALHO` forem registrados no período estendido — nenhum recálculo manual aqui; (4) **Empreitada**: `valor_total` é fechado, então o body também carrega `valorAdicionalDias` (valor do período restante) que o backend **soma** ao `valor_total` existente. O front só captura os dois campos (`novaDataEncerramento`, `valorAdicionalDias` quando Empreitada) e não faz nenhuma dessas contas — fica tudo a cargo do backend. |
+| 7 | Candidatar-se (`ContractDetailProvider`) | `POST /api/contratos/{uuid}/candidaturas` | `PRESTADOR` | Exige status de acesso `Liberado` e contrato em `Aguardando Prestadores`. |
+| 8 | Selecionar prestador (`ContractDetailAdmin`/`ContractDetailClient`) | `POST /api/contratos/{uuid}/candidaturas/{candidaturaId}/selecionar` | `CLIENTE` ou `ADMIN`¹ | Ação financeira irreversível: reserva `RESERVA_SERVICO` + `RESERVA_TAXA` (regra 5/§2.1), exige saldo ≥ serviço + taxa, grava `Selecionado` + `Data de Seleção`. Em nome do Cliente por `ADMIN` exige `log_auditoria`. |
+| 9 | Pagamento final (`ContractDetailAdmin`) | `POST /api/contratos/{uuid}/pagamento-final` | `ADMIN`/`ANALISTA` | Aprova a NF, libera `LIBERACAO_PRESTADOR` e cobra `COBRANCA_TAXA` no mesmo evento (PRD §4.7 estado 7, regra 5). Front hoje só habilita o botão se houver arquivo de NF anexado — o backend deve validar de novo, não confiar só na UI. |
+| 10 | Finalizar contrato (`ContractDetailAdmin`) | `POST /api/contratos/{uuid}/finalizar` | `ADMIN`/`ANALISTA` | Fecha a execução, status final (PRD §4.7 estado 5). |
+| 11 | Catálogo de tipos de serviço | `GET /api/tipos-servico` | qualquer autenticado | Hoje é a constante local `TIPOS_SERVICO` em `src/data/catalogos.js`. Editável pelo `ADMIN` quando `/admin` (backlog) existir. |
+| 12 | Catálogo de cursos | `GET /api/cursos` | qualquer autenticado | Idem, constante `CURSOS` no mesmo arquivo. |
+| 13 | Catálogo de habilidades | `GET /api/habilidades` | qualquer autenticado | Idem, constante `HABILIDADES` no mesmo arquivo — decidido em 18/09/2026 que Habilidades desejadas segue o mesmo tratamento de Cursos exigidos (lista fechada, não texto livre). |
+| 14 | Listar contratos (`Contracts*`, as 3 visões — `/contracts`, PRD §4.6) | `GET /api/contratos?status=&tipoContrato=&tipoServico=&cidade=&pagina=` | `CLIENTE` (só os próprios) · `PRESTADOR` (só `Aguardando Prestadores`) · `ADMIN`/`ANALISTA` (todos) | Substitui o antigo mural exclusivo do Prestador (`/provider/opportunities`) — decisão de 17/09/2026. **Escopo por papel é do backend, não por parâmetro**: `CLIENTE` só vê os próprios contratos (PRD §3.6) sem precisar informar isso na query; `PRESTADOR` sempre recebe `status=Aguardando Prestadores` (o front força esse valor, não é um filtro que ele escolhe) e não recebe campos sensíveis (mesma regra do item 3: sem `percentualTaxa`/`valorTaxa`/`notaFiscal`). Resposta esperada: `{ itens: [{ uuid, empresa, tipoServico, cidade, estado, dataInicio, dataEncerramento, valorTotal, status }], temMais }`. `pagina` é 1-based; front implementa "Carregar Mais" (soma itens) e "Atualizar" (substitui do zero) — sem endpoint, os 3 front-ends de `pages/Contracts/` ficam com a lista vazia. |
+
+¹ mesma observação de rodapé da matriz do `PRD.md` §3.6: ação de `ADMIN` em nome de terceiro
+exige registro em `log_auditoria`.
+
+---
+
+## 7. Backlog de endpoints — módulo de Perfil do Cliente (17/09/2026)
+
+`ClientProfile.jsx` virou um dispatcher (`ClientProfileAdmin.jsx` / `ClientProfileClient.jsx`),
+mesmo padrão do módulo de Contrato (seção 6). Cada ação já está marcada com `TODO` no front — sem
+endpoint ainda. Decisões de UI referenciadas estão em `Figma.log` Sessão 7.
+
+| # | Ação (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Buscar perfil (`ClientProfileAdmin`/`ClientProfileClient`/`ClientProfileProvider`) | `GET /api/clientes/{uuid}` | `CLIENTE` dono · `ADMIN`/`ANALISTA` · `PRESTADOR` selecionado e ativo | O código anterior lia dados do usuário **logado** em vez do Cliente **sendo visto** (bug de origem, ver `Figma.log` Sessão 7 nota 45) — o backend deve devolver o Cliente do `{uuid}`, não o usuário do token. **Filtrar por papel**: campos de Documentação completos (endereço, CNAE, atividades secundárias) e Segmento/Tipos de Profissional só para `ADMIN`/`ANALISTA` — a visão do `CLIENTE` é mais enxuta (PRD §4.2). Para `PRESTADOR`, devolver **só** nomeEmpresa/responsavel/telefone/emailCorporativo/sobre — nunca Documentação, Financeiro ou Contratos — **e apenas se ele estiver selecionado e com contrato ativo com esse Cliente** (PRD §4.3/regra 16, `Figma.log` Sessão 8); caso contrário, 403/404. Essa checagem de "selecionado e ativo" (candidatura com `selecionado = true` num contrato cujo status não seja `Cancelado`) ainda não tem definição de corte exata — ver nota da Sessão 8 sobre o que conta como "ativo". |
+| 2 | Editar perfil — Admin (`ClientProfileAdmin`) | `PUT/PATCH /api/clientes/{uuid}` | `ADMIN` (não `ANALISTA` — PRD §3.6 nota ³) | Body só com o que esse papel edita: foto, `cnpj`, `dadosGerais` (nome, segmento, tiposProfissional, responsável, telefone, emailCorporativo), `sobre`. API rejeita Documentação/Financeiro/data de cadastro no corpo. Edição de `ADMIN` em perfil de terceiro gera `log_auditoria` (regra 14). |
+| 3 | Editar perfil — Cliente (`ClientProfileClient`) | mesmo endpoint | `CLIENTE` dono | Body só com foto, senha, `dadosGerais` (nome, responsável, telefone, emailCorporativo), `sobre`. `cnpj` nunca entra — vem do cadastro; API rejeita se vier no corpo. |
+| 4 | Verificar CNPJ (`ClientProfileAdmin`) | `POST /api/clientes/{uuid}/verificar-cnpj` | `ADMIN`/`ANALISTA` | Integra com **sintegrapi.com.br** (10 consultas grátis/mês, tempo real da Receita) como principal e **brasilapi.com.br** (grátis, sem limite, até 45 dias de atraso) como fallback quando o limite mensal estourar. Grava o resultado em Documentação — nunca editável manualmente (regra 13/PRD §4.5). |
+| 5 | Alterar status de acesso (`ClientProfileAdmin`) | `PUT /api/clientes/{uuid}/status` | `ADMIN`/`ANALISTA` | Body: `novoStatus` (`Pendente`/`Liberado`/`Bloqueado`). Mover para `Liberado` exige validar CNPJ `ATIVO` **e** Capital Social mínimo de R$ 10.000 (PRD §3.5) — o front só envia o destino escolhido, quem valida é o backend. Gera `log_auditoria`. |
+| 6 | Adicionar créditos bônus (`ClientProfileAdmin`) | `POST /api/clientes/{uuid}/creditos/bonus` | `ADMIN` (não `ANALISTA`) | Body: `valor`. Grava uma linha em `transacao_credito` **sem cobrança** (tipo a definir, ex. `BONUS_ADMIN`) — distinta da compra paga que o próprio Cliente faz em `/client/profile/{uuid}/billing` (`ClientBilling.jsx`, já coberta pela seção 4.4 do PRD). Gera `log_auditoria` (regra 14). |
+
+Nenhum desses seis pontos está implementado hoje — a única entidade que existe é `usuario`
+(seção 1), sem `cliente` nem `transacao_credito`. Entram junto com a seção 4 item 7 (entidades do
+núcleo).
+
+---
+
+## 8. Backlog de endpoints — Cadastro em duas etapas (17/09/2026)
+
+### O que já foi implementado no front
+
+O cadastro de Cliente e Prestador foi dividido em duas telas — a conta é criada primeiro
+(nome/telefone/email/senha), o resto do perfil é preenchido depois, já autenticado:
+
+- **Primeira etapa** (`pages/FirstRegister/`) — `FirstRegisterClient.jsx` e
+  `FirstRegisterProvider.jsx`, rotas `/register/client` e `/register/provider`. Só criam a
+  conta: chamam `POST /api/usuarios/registrar` (já existe, sem mudança de contrato) + login
+  automático, e navegam para a segunda etapa.
+- **Segunda etapa** (`pages/Register/`) — `RegisterClient.jsx` e `RegisterProvider.jsx`, rotas
+  `/register/client/complete` e `/register/provider/complete` (protegidas: exigem estar
+  autenticado com o papel `CLIENTE`/`PRESTADOR`, respectivamente). Completam o resto do perfil,
+  mas **ficaram sem endpoint algum** — só a criação de conta da primeira etapa é uma chamada
+  real hoje.
+- Cada etapa tem sua própria pasta com um `*Fields.jsx` (átomos de UI: campo de texto, select,
+  radio, checkbox) e um `*fieldsUtils.js` (classes Tailwind compartilhadas) — puramente
+  organização de front, não afeta contrato de API.
+- Bug corrigido de passagem: o Prestador mandava `tipo: 'TRABALHADOR'` no cadastro (não existe
+  no enum); agora manda `'PRESTADOR'`.
+
+### O que falta implementar no backend
+
+| # | Ação (tela) | Endpoint | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Criar conta (`FirstRegisterClient`/`FirstRegisterProvider`) | `POST /api/usuarios/registrar` (já existe) | público | Sem mudança de contrato: `nome`, `email`, `telefone`, `senha`, `senhaConfirm`, `tipo` (`CLIENTE`/`PRESTADOR`). O front só passou a chamar isso **antes** de coletar o resto do perfil — não depois. **Validação de senha pendente** (ver nota abaixo). |
+| 2 | Completar perfil do Cliente (`RegisterClient`, `/register/client/complete`) | `PATCH /api/clientes/{uuid}` (mesmo endpoint da seção 7, ação 2/3) | `CLIENTE` dono, recém-criado (status `Pendente`) | Body: segmento, tipoProfissionalInteresse, cargo, nomeEmpresa, cnpj, tamanhoOperacao, jaTrabalhaTerceirizados, motivoCadastro. Preenche Dados Gerais/Documentação do PRD §4.2 pela primeira vez — depois disso o fluxo normal de edição (seção 7) assume. |
+| 3 | Completar perfil do Prestador (`RegisterProvider`, `/register/provider/complete`) | `PATCH /api/prestadores/{uuid}` (endpoint novo, ainda não coberto por nenhuma seção) | `PRESTADOR` dono, recém-criado (status `Pendente`) | Body: cpf, estado, cidade, meiCnpj/cnpj, clt, disponibilidade, areaAtuacao (até 5), experiencia, nivelConhecimento, terceirizado, motivo. Sem entidade `prestador` ainda (só `usuario`, seção 1) — entra junto com o núcleo (seção 4 item 7). |
+
+Front hoje não chama nenhum dos itens 2/3 de verdade — `handleCompleteProfile` nas duas telas é
+`TODO` e só navega para a Home do papel (`getHomeRoute`), igual ao padrão já usado no restante do
+módulo de Perfil (seção 7).
+
+### Validação de senha — pendente de definição (item 1)
+
+`FirstRegisterClient`/`FirstRegisterProvider` mostram dois avisos estáticos sob os campos de
+senha — "Aviso de requisitos mínimos!" e "Aviso - as senhas devem coincidir" — que são só texto
+fixo do mockup, sem validação de verdade por trás. O front já bloqueia o envio se `senha !==
+senhaConfirm` (comparação local, antes de chamar a API), mas **não valida requisito nenhum de
+força de senha** — não há regra definida em lugar algum (`PRD.md` não especifica tamanho mínimo,
+caracteres exigidos, etc.).
+
+Quando o endpoint `POST /api/usuarios/registrar` for revisado, ele precisa:
+1. **Definir e documentar os requisitos mínimos de senha** (tamanho, maiúscula/minúscula,
+   número, caractere especial — a decidir, ver `PRD.md` §9) e validá-los no backend, não só no
+   front.
+2. **Revalidar `senha === senhaConfirm` no backend também** — o front comparar não é garantia
+   contra um cliente HTTP direto.
+3. Devolver mensagens de erro específicas (ex.: `400` com `{ campo: 'senha', mensagem: '...' }`)
+   para que o front troque o aviso estático por feedback real — é só nesse momento que os dois
+   `<small>` de `PasswordField` (`FirstRegister/FirstRegisterFields.jsx`) deixam de ser texto
+   fixo.
+
+---
+
+## 9. Backlog de endpoints — módulo de Dashboard (17/09/2026)
+
+`/dashboard` é a landing pós-login de todo papel (`Login.jsx` redireciona todo mundo pra cá).
+`Dashboard.jsx` virou dispatcher (mesmo padrão das seções 6–7), com as três visões já no front:
+`DashboardAdmin.jsx` (ADMIN/ANALISTA), `DashboardClient.jsx` (CLIENTE) e `DashboardProvider.jsx`
+(PRESTADOR).
+
+| # | Seção (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Visão Geral Financeira (`DashboardAdmin`) | `GET /api/dashboard/admin` | `ADMIN` | Agregado de **toda a plataforma**: pagamentos restantes a prestadores, créditos reservados de todos os clientes, saldo mensal (taxa retida). É a linha "Auditoria financeira da plataforma" da matriz do PRD §3.6 — **exclusiva do `ADMIN`**, o `ANALISTA` não recebe esse bloco (front já esconde a seção quando `user.tipo === 'ANALISTA'`; o backend deveria 403 se o `ANALISTA` tentar chamar só essa parte, caso vire endpoint separado). |
+| 2 | Visão Geral Contratos (`DashboardAdmin`) | mesmo endpoint, campo `contratos` | `ADMIN`/`ANALISTA` | Três blocos (`criados`/`abertos`/`finalizados`), cada um com contagem, timestamp da última atualização e os 3 contratos mais recentes (`itens: [{id}]`). O link "Ver mais" de cada card aponta para `/contracts` desde 17/09/2026 (seção 6, item 14) — a rota de listagem já existe no front, mas ainda sem filtro pelo bloco específico (`criados`/`abertos`/`finalizados`); Sidebar também já aponta "Contratos" pra lá nos 3 papéis. |
+| 3 | Visão Geral Usuários (`DashboardAdmin`) | mesmo endpoint, campo `usuarios` | `ADMIN`/`ANALISTA` | Contagens: clientes ativos (com contrato lançado), prestadores ativos (que atuaram) e clientes inativos (com crédito mas sem contrato). Sem filtro de papel — a matriz do PRD §3.6 não restringe esse dado ao `ANALISTA`. |
+| 4 | Visão Geral Financeira (`DashboardClient`) | `GET /api/dashboard/cliente` | `CLIENTE` dono | Escopo por registro (PRD §3.6): créditos restantes, reservados e usados **do próprio Cliente**, não agregado da plataforma — painel financeiro é exclusivo do Cliente (regra 9), cada papel só vê o seu. Mesmos dados de `conta_credito`/`transacao_credito` já usados em `ClientBilling.jsx`, só que resumidos para o mês corrente. |
+| 5 | Visão Geral Contratos (`DashboardClient`) | mesmo endpoint, campo `contratos` | `CLIENTE` dono | Mesmo formato do item 2, mas escopado aos contratos **do próprio Cliente**. |
+| 6 | "Novo Contrato" / "Adicionar Créditos" (`DashboardClient`) | sem endpoint novo | `CLIENTE` | Botões só navegam para `/client/contracts/new` e `/client/profile/{uuid}/billing` — reaproveitam os endpoints já cobertos nas seções 4.4 e 6 (itens 1/2), não precisam de rota própria. |
+| 7 | Visão Geral Financeira (`DashboardProvider`) | `GET /api/dashboard/prestador` | `PRESTADOR` dono | **Não é o painel de gestão de crédito do Cliente** (PRD §4.4, exclusivo dele) — resumo de pagamentos só leitura: ganhos do mês, valores recebidos (NF paga) e a receber (aguardando pagamento final). Sem crédito, taxa ou saldo da plataforma. Distinção decidida em 18/09/2026 — PRD §4.3/regra 9 do `CLAUDE.md` foram atualizadas pra deixar isso explícito (o design original conflitava com "sem painel financeiro para o Prestador"). |
+| 8 | Visão Geral Contratos (`DashboardProvider`) | mesmo endpoint, campo `contratos` | `PRESTADOR` dono | Três blocos: `atual` (o contrato em execução — badge com o ID em vez de contagem), `favoritos` (contagem — **depende do recurso "favoritar contrato" ainda não implementado**, PRD §4.6/§8) e `finalizados` (contagem). Mesmo formato de item/lista dos demais `ContractOverviewCard`. |
+
+Nenhum dos oito pontos está implementado — não existe endpoint de dashboard nem agregação alguma
+hoje (a única entidade é `usuario`, seção 1). O item 8 (`favoritos`) também depende de uma
+entidade que ainda não existe em lugar nenhum (nem no modelo, nem no mural) — ver PRD §8.
+
+O "medidor" de 4 barras decrescentes sob cada `StatCard` (Figma) representa o valor do card como
+**proporção do valor total mensal** (ex.: Créditos Reservados / valor total agenciado no mês) —
+confirmado em conversa, 18/09/2026. Fica de **backlog**: falta o endpoint que dá o valor total
+mensal e a proporção de cada card; até lá o front mantém as larguras fixas do desenho, sem dado
+real ligado (`ProportionalMeter` em `DashboardFields.jsx`).

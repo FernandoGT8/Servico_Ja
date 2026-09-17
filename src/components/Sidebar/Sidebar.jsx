@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   LayoutDashboard,
@@ -14,12 +14,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
 import { getHomeRoute, getProfileRoute } from "@/utils/roleRoutes";
-
-// Só o Prestador tem hoje uma tela que funciona como "meus contratos"
-// (o mural de oportunidades). Cliente/Admin/Analista ainda não têm rota.
-function getContractsTarget(tipo) {
-  return tipo === "PRESTADOR" ? "/provider/opportunities" : null;
-}
 
 function SidebarItem({ label, to, icon: Icon }) {
   if (!to) {
@@ -92,7 +86,6 @@ function BottomBarLink({ label, to, icon: Icon }) {
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const { uuid } = useParams();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -107,23 +100,21 @@ export default function Sidebar() {
 
   // Equipe Serviços Já! (ADMIN/ANALISTA) navega por Dashboard/Analytics;
   // Cliente/Prestador navega por Home. "Usuários" é exclusivo do ADMIN
-  // (PRD §3.6 — ANALISTA não gerencia usuários internos).
+  // (PRD §3.6 — ANALISTA não gerencia usuários internos). "Contratos" aponta
+  // pra rota única /contracts pros 3 papéis (dispatcher por papel, substitui
+  // /provider/opportunities — decisão de 17/09/2026, PRD §4.6/§6.2).
   const primaryItems = isInternal
     ? [
         { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
         { label: "Analytics", to: null, icon: TrendingUp },
-        { label: "Contratos", to: null, icon: FileText },
+        { label: "Contratos", to: "/contracts", icon: FileText },
         ...(user?.tipo === "ADMIN"
           ? [{ label: "Usuários", to: null, icon: Users }]
           : []),
       ]
     : [
-        { label: "Home", to: getHomeRoute(user?.tipo, uuid), icon: Home },
-        {
-          label: "Contratos",
-          to: getContractsTarget(user?.tipo),
-          icon: FileText,
-        },
+        { label: "Home", to: getHomeRoute(), icon: Home },
+        { label: "Contratos", to: "/contracts", icon: FileText },
       ];
 
   const accountItems = [
@@ -131,7 +122,7 @@ export default function Sidebar() {
     {
       label:
         !isInternal && user?.tipo === "PRESTADOR" ? "Meu Perfil" : "Minha Conta",
-      to: isInternal ? null : getProfileRoute(user?.tipo, uuid),
+      to: isInternal ? null : getProfileRoute(user?.tipo, user?.uuid),
       icon: User,
     },
   ];

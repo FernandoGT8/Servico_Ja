@@ -60,12 +60,21 @@ function StoreBadge({ href, label, subtitle, title, path }) {
       aria-label={label}
       className="flex h-11 w-40 items-center gap-2.5 rounded-[5px] bg-neutral-900 px-3 text-white transition-opacity hover:opacity-90"
     >
-      <svg className="h-6 w-6 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg
+        className="h-6 w-6 shrink-0"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path d={path} />
       </svg>
       <span className="flex flex-col leading-tight">
-        <span className="font-rubik text-[10px] text-slate-300">{subtitle}</span>
-        <span className="font-rubik text-sm font-medium text-slate-50">{title}</span>
+        <span className="font-rubik text-[10px] text-slate-300">
+          {subtitle}
+        </span>
+        <span className="font-rubik text-sm font-medium text-slate-50">
+          {title}
+        </span>
       </span>
     </a>
   );
@@ -85,7 +94,7 @@ function FooterColumn({ title, children }) {
 export default function Footer() {
   return (
     <footer className="w-full bg-neutral-100">
-      <div className="mx-auto flex w-full max-w-[1380px] flex-col gap-8 px-5 pt-10 pb-7 sm:px-9 sm:pt-14 lg:px-16">
+      <div className="mx-auto flex w-full max-w-345 flex-col gap-8 px-5 pt-10 pb-7 sm:px-9 sm:pt-14 lg:px-16">
         <span className="font-rubik text-2xl font-medium text-neutral-900">
           SERVIÇOS JÁ!
         </span>
