@@ -11,7 +11,7 @@ export function FirstRegisterLayout({ title, subtitle, onSubmit, children }) {
   return (
     <div className="flex w-full flex-col items-center gap-10">
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-2xl bg-zinc-700 px-8 py-10 text-center sm:flex-row sm:gap-7 sm:px-12 sm:text-left">
-        <h1 className="font-dm-sans text-3xl leading-tight font-bold text-white sm:max-w-md sm:text-4xl sm:leading-[48px]">
+        <h1 className="font-dm-sans text-3xl leading-tight font-bold text-white sm:max-w-md sm:text-4xl sm:leading-12">
           {title}
         </h1>
         <p className="max-w-96 text-lg leading-8 text-white">{subtitle}</p>
@@ -24,7 +24,10 @@ export function FirstRegisterLayout({ title, subtitle, onSubmit, children }) {
         >
           <User className="h-20 w-20 text-white/40" strokeWidth={1.5} />
         </div>
-        <form onSubmit={onSubmit} className="flex w-full max-w-96 flex-col gap-7">
+        <form
+          onSubmit={onSubmit}
+          className="flex w-full max-w-96 flex-col gap-7"
+        >
           {children}
         </form>
       </div>
@@ -46,7 +49,9 @@ export function PasswordField({ label, hint, className = "", ...inputProps }) {
     <label className={`flex flex-col gap-2 ${className}`}>
       <span className={labelClassName}>{label}</span>
       <input {...inputProps} type="password" className={inputClassName} />
-      {hint && <small className="text-right text-xs text-slate-500">{hint}</small>}
+      {hint && (
+        <small className="text-right text-xs text-slate-500">{hint}</small>
+      )}
     </label>
   );
 }

@@ -51,8 +51,10 @@ export default function AppRoutes() {
         <Route path="/register/provider/complete" element={<RegisterProvider />} />
       </Route>
 
-      {/* Área interna do time Serviços Já! — landing pós-login de ADMIN/ANALISTA */}
-      <Route element={<RequireAuth allowedRoles={['ADMIN', 'ANALISTA']} />}>
+      {/* Landing pós-login de todos os papéis — dashAdmin/dashClient/dashProvider
+          (dispatcher por papel, mesmo padrão de ClientProfile) chegam numa
+          próxima seção; hoje é a mesma tela genérica para os 4 papéis. */}
+      <Route element={<RequireAuth />}>
         <Route path="/dashboard" element={<Dashboard />} />
       </Route>
 
