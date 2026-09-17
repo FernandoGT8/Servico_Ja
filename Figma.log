@@ -539,3 +539,83 @@ Finalizar Contrato) descrito na Sessão 4 **não é a visão do Cliente** — é
     modal também pede um **valor adicional do período**, que o backend soma ao valor total
     existente. O front só coleta os dois campos (nova data + valor adicional quando Empreitada)
     e não faz nenhuma dessas contas — a implementação de verdade é do backend.
+
+---
+
+## 16. Sessão 7 (17/09/2026) — Perfil do Cliente: duas visões e ações administrativas
+
+`ClientProfile.jsx` virou um dispatcher por papel, mesmo padrão de `ContractDetail.jsx` (§13–15):
+`ClientProfileAdmin.jsx` (visão de `ADMIN`/`ANALISTA`) e `ClientProfileClient.jsx` (visão do
+próprio `CLIENTE`), com átomos de UI compartilhados em `ClientProfileFields.jsx`.
+
+39. **Visão do `ADMIN`/`ANALISTA`** mantém todos os campos de `/client/profile/{uuid}` (PRD
+    §4.2): ID do Cliente, Acesso ao Sistema e Email (login) em Conta (sempre travados — Email é
+    o login por PRD §3.4/decisão 25 e não aparecia no mockup colado nesta sessão, mas continua
+    exposto para conferência), CNAE/Atividades Secundárias completos em Documentação, Segmento e
+    Tipos de Profissional de Interesse em Dados Gerais.
+40. **Visão do `CLIENTE`** é mais enxuta: sem ID do Cliente/Acesso ao Sistema em Conta, sem
+    Segmento/Tipos de Profissional/Data do Cadastro em Dados Gerais, e Documentação só com
+    CNPJ/Status do CNPJ/Razão Social — endereço, CNAE e atividades secundárias ficam só na visão
+    interna. Email (login) continua exposto, só leitura, pelo mesmo motivo da regra 39.
+41. **"Editar Perfil"/"Salvar" é exclusivo do `ADMIN`** — o `ANALISTA` não tem essa ação nesta
+    tela. Decidido em conversa depois de identificado o conflito: a matriz de permissões do PRD
+    §3.6 já marcava "Alterar qualquer contrato ou perfil, add/remover dados" só para `ADMIN`, e a
+    descrição inicial da ação agrupava "Admin/Analista" — resolvido a favor da matriz existente
+    (PRD prevalece, nota ³ da matriz). Quando desbloqueado, edita: **Admin** → Foto e CNPJ
+    (Conta), todo o Dados Gerais menos Data do Cadastro, e Sobre; **Cliente** → Foto e Senha
+    (Conta), todo o Dados Gerais mostrado a ele, e Sobre. CNPJ do Cliente nunca é editável por
+    ele mesmo — vem do cadastro. Documentação e Financeiro seguem sempre travados nas duas
+    visões (o primeiro só muda por "Verificar CNPJ", o segundo é campo calculado, PRD §4.5).
+42. **"Liberar Cadastro" virou "Alterar Status"** — ação de `ADMIN` e `ANALISTA` (ambos marcados
+    em "Liberar/bloquear acesso", matriz §3.6), porque também bloqueia, não só libera. Abre um
+    modal com um select das 3 opções (`Pendente`/`Liberado`/`Bloqueado`, catálogo
+    `STATUS_ACESSO` em `catalogos.js`). Critério confirmado nesta sessão: mover para `Liberado`
+    exige, além do CNPJ `ATIVO`, **Capital Social mínimo de R$ 10.000** — validação é do backend,
+    o front só propõe o destino (PRD §3.5 atualizado).
+43. **"Verificar CNPJ"** — ação de `ADMIN` e `ANALISTA`. Fontes avaliadas para a consulta:
+    **sintegrapi.com.br** (10 consultas grátis/mês, dado em tempo real da Receita Federal) como
+    principal, **brasilapi.com.br** (grátis, sem limite, mas até 45 dias de atraso) como fallback
+    quando o limite mensal estourar. Decisão de qual usar e a lógica de fallback ficam para a
+    implementação do backend — o front só expõe o botão (TODO).
+44. **"Adicionar Créditos" bônus é exclusiva do `ADMIN`** — o `ANALISTA` não tem essa ação
+    (matriz §3.6, mesma exclusão já existente para "Comprar créditos"). É um crédito concedido
+    sem cobrança, distinto da compra paga que o próprio Cliente faz em
+    `/client/profile/{uuid}/billing` (`ClientBilling.jsx`, que já existia e não muda). Abre um
+    modal pedindo o valor do bônus — sem integração ainda (TODO, ver `BACKEND_ANALISE.md` §7).
+45. **Bug de origem corrigido**: o código anterior de `ClientProfile.jsx` lia `statusAcesso`,
+    `email`, `telefone` e `criadoEm` do usuário **logado** (`useAuth()`), não do **Cliente sendo
+    visto** — funcionava por acaso só quando o próprio Cliente via o próprio perfil. As duas
+    visões novas buscam esses dados por `GET /api/clientes/{uuid}` (stub, endpoint ainda não
+    existe), mesmo padrão de `ContractDetailAdmin.jsx`/`ContractDetailClient.jsx` para
+    `/contracts/{uuid}`.
+
+---
+
+## 17. Sessão 8 (17/09/2026) — Terceira visão de /client/profile/{uuid}: o Prestador
+
+`ClientProfile.jsx` ganhou um terceiro ramo no dispatcher: `ClientProfileProvider.jsx`, para
+`user.tipo === "PRESTADOR"`. Motivo: o PRD já previa o Cliente vendo o contato do Prestador a
+partir da seleção (regra 15/§4.3) para cobrir a falta de chat no MVP — faltava a mesma solução no
+sentido inverso, que é o que esta sessão resolve.
+
+46. **Campos da visão do Prestador**: Foto (só exibição, sem upload — este papel não edita o
+    perfil do Cliente), Nome, Responsável, Telefone, Email e Sobre. Nada de Conta, Documentação,
+    Financeiro ou Contratos — o Prestador não tem motivo para ver saldo, CNPJ ou histórico do
+    Cliente, só o necessário para combinar a execução. Um único botão de ação, "Voltar" — sem
+    edição, sem "Adicionar Créditos", sem nenhuma das ações administrativas das outras duas
+    visões.
+47. **Condição de acesso**: só um Prestador **selecionado e com contrato ativo** com esse Cliente
+    deve alcançar esta tela — nunca antes da seleção, nunca depois de `Cancelado`. Não há como o
+    front aplicar esse filtro de verdade sem `GET /api/clientes/{uuid}` existir; por ora o
+    componente só busca e exibe o que a API devolver, mesmo padrão de
+    `ContractDetailProvider.jsx` para os campos exclusivos do Cliente em `/contracts/{uuid}`
+    (comentário lá: "o ideal é o backend nem mandar" o que esse papel não pode ver). **A palavra
+    "ativo" ficou assumida, não confirmada em conversa**: adotei a mesma janela aberta da regra
+    15 (Cliente vê contato do Prestador "a partir da seleção", sem data de corte declarada) —
+    ou seja, qualquer status a partir de `Prestador Selecionado` (PRD §4.7) que não seja
+    `Cancelado`. Se a intenção for cortar o acesso mais cedo (ex.: só até `Concluído`, ou só até
+    a NF ser paga), avisar para eu ajustar o PRD e o backlog de endpoints.
+48. **Por que não reaproveitar `ContractDetailProvider.jsx` para expor isso**: aquela tela é sobre
+    o *contrato*; esta é sobre o *Cliente* como empresa (nome, responsável, contato, bio) — dado
+    que persiste entre vários contratos do mesmo Cliente, não faz sentido duplicá-lo por
+    contrato. Por isso ficou em `ClientProfile.jsx`, não em `ContractDetail.jsx`.

@@ -191,9 +191,10 @@ prestador, **não credenciais** — login por documento vai para o backlog (§8)
 | Liberar / bloquear acesso | ✅ | ✅ | — | — |
 | Gerenciar catálogos (tipo de serviço, curso, habilidade) | ✅ | — | — | — |
 | Gerenciar usuários internos | ✅ | — | — | — |
-| Alterar qualquer contrato ou perfil, add/remover dados | ✅ | — | — | — |
+| Alterar qualquer contrato ou perfil, add/remover dados³ | ✅ | — | — | — |
 | Auditoria financeira da plataforma | ✅ | — | — | — |
 | Comprar créditos | ✅¹ | — | ✅ | — |
+| Conceder créditos bônus ao Cliente *(sem cobrança)* | ✅ | — | — | — |
 | Criar e publicar contrato | ✅¹ | — | ✅ | — |
 | Selecionar prestador *(reserva crédito)* | ✅¹ | — | ✅ | — |
 | Registrar falta | ✅¹ | — | ✅ | — |
@@ -204,9 +205,15 @@ prestador, **não credenciais** — login por documento vai para o backlog (§8)
 | Aprovar Nota Fiscal *(libera pagamento)* | ✅¹ | — | ✅ | — |
 | Ver RG/CNH e comprovantes do prestador | ✅ | ✅ | ❌ | ✅² |
 | Ver foto, habilidades e "sobre" do prestador | ✅ | ✅ | ✅ | ✅ |
+| Ver contato do Cliente *(nome, responsável, telefone, email)* | ✅ | ✅ | — | ✅⁴ |
 
 ¹ por ser acesso total; ação em nome de terceiro **exige registro em `log_auditoria`**
 ² apenas os próprios documentos
+³ inclui **"Editar Perfil"/"Salvar"** em `/client/profile/{uuid}` — o `ANALISTA` não tem essa
+  ação nessa tela (confirmado em conversa, 17/09/2026); seu escopo ali é só "Validar CNPJ" e
+  "Liberar/bloquear acesso" (linhas acima), ver `Figma.log` Sessão 7
+⁴ só enquanto **selecionado e com contrato ativo** com esse Cliente — não antes da seleção, não
+  depois de `Cancelado` (ver §4.3, `Figma.log` Sessão 8)
 
 **Escopo por registro**: o `CLIENTE` só enxerga os **próprios** contratos, créditos e
 candidaturas; o `PRESTADOR` só os contratos em que se candidatou ou foi selecionado, e o
@@ -217,6 +224,18 @@ Todo usuário tem `Pendente` · `Liberado` · `Bloqueado`, determinado pela **va
 
 **`Pendente` = navega, mas não transaciona.** Pode fazer login, ver o mural e perfis e
 completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se nem comprar crédito.
+
+**Critério de liberação do Cliente** (decidido em 17/09/2026, ver `Figma.log` Sessão 7): passar
+para `Liberado` exige, além do CNPJ **ATIVO**, **Capital Social mínimo de R$ 10.000**. A ação
+que muda o status é `ADMIN`/`ANALISTA` (matriz §3.6), feita em **`/client/profile/{uuid}`** —
+"Alterar Status" (antes chamada "Liberar Cadastro", renomeada porque também **bloqueia**, não só
+libera).
+
+**Consulta de CNPJ** ("Verificar CNPJ", mesma tela): duas fontes avaliadas — **sintegrapi.com.br**
+(10 consultas grátis/mês, dado em tempo real da Receita Federal) como principal, e
+**brasilapi.com.br** (grátis, sem limite de consultas, mas com até 45 dias de atraso) como
+fallback quando o limite mensal estourar. Preenche a seção Documentação do perfil — nunca é
+editada manualmente, nem pelo `ADMIN` (regra 13/§4.5). Implementação fica a cargo do backend.
 
 ---
 
@@ -245,6 +264,16 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 - [ ] **Contratos**: histórico
 - [ ] **Sobre**: biografia da empresa
 
+> **Quem edita o quê em `/client/profile/{uuid}`** (decidido em 17/09/2026, ver `Figma.log`
+> Sessão 7): a tela tem duas visões, mais enxuta para o `CLIENTE`. "Editar Perfil"/"Salvar" é
+> **exclusivo do `ADMIN`** (o `ANALISTA` não tem essa ação aqui, matriz §3.6 nota ³): desbloqueia
+> Foto e CNPJ (Conta), todo o Dados Gerais menos data do cadastro, e Sobre — Documentação e
+> Financeiro seguem sempre travados. Para o `CLIENTE`, o mesmo botão desbloqueia Foto e Senha
+> (Conta), Dados Gerais e Sobre; CNPJ vem do cadastro e nunca é editável por ele. "Verificar
+> CNPJ" e "Alterar Status" (§3.5) são ações à parte, do `ADMIN` e do `ANALISTA`. "Adicionar
+> Créditos" bônus é exclusiva do `ADMIN` (matriz §3.6) — distinta da compra paga que o próprio
+> `CLIENTE` faz em `/client/profile/{uuid}/billing`.
+
 ### 4.3 Perfil do Prestador (`/provider/profile/{uuid}`)
 - [ ] **Conta**: ID sequencial autogerado · **email (login)** · CPF · senha · status de acesso
 - [ ] **Foto do perfil** (upload)
@@ -263,6 +292,16 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 >
 > *Aplicado a partir da **seleção** do prestador, que é o ponto onde a relação contratual nasce
 > e o contato passa a ser necessário. Se você quiser liberar já na candidatura, é só dizer.*
+
+> 🔒 **No sentido inverso, o Prestador vê o contato do Cliente** (decidido em 17/09/2026, ver
+> `Figma.log` Sessão 8) — uma terceira visão de `/client/profile/{uuid}`
+> (`ClientProfileProvider.jsx`), só com Nome, Responsável, Telefone, Email e "Sobre" da empresa,
+> tudo somente leitura, sem Conta/Documentação/Financeiro/Contratos. Alcançável **somente pelo
+> Prestador selecionado e com contrato ativo** com esse Cliente — não antes da seleção, não
+> depois de `Cancelado`. Espelha a regra acima e resolve o mesmo furo de comunicação (sem chat
+> no MVP), agora na direção Prestador → Cliente. *Janela exata de "ativo" (se some ao fim do
+> contrato ou continua após `Pago`/`Finalizado`) segue como assumida pela sessão que definiu a
+> tela — confirmar se precisar de um corte mais estrito.*
 - [ ] **Habilidades**: áreas de atuação · nível de conhecimento por área ·
       "já atuou como terceirizado?"
 - [ ] **Contratos**: histórico

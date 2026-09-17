@@ -90,6 +90,10 @@ Errar qualquer uma destas quebra o produto:
     seleção gera lançamento compensatório no extrato, nunca ajuste silencioso.
 15. **O Cliente vê o contato do prestador** (nome, telefone, email) a partir da seleção —
     mas nunca os documentos.
+16. **O Prestador vê o contato do Cliente** (nome, responsável, telefone, email, "sobre") em
+    `/client/profile/{uuid}` — só enquanto **selecionado e com contrato ativo** com esse Cliente
+    (não antes da seleção, não depois de `Cancelado`). Espelha a regra 15 no sentido inverso;
+    quem garante o filtro é o backend.
 
 ---
 

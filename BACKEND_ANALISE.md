@@ -233,3 +233,24 @@ da seção 4). Decisões de UI referenciadas estão em `Figma.log` §13–§15.
 
 ¹ mesma observação de rodapé da matriz do `PRD.md` §3.6: ação de `ADMIN` em nome de terceiro
 exige registro em `log_auditoria`.
+
+---
+
+## 7. Backlog de endpoints — módulo de Perfil do Cliente (17/09/2026)
+
+`ClientProfile.jsx` virou um dispatcher (`ClientProfileAdmin.jsx` / `ClientProfileClient.jsx`),
+mesmo padrão do módulo de Contrato (seção 6). Cada ação já está marcada com `TODO` no front — sem
+endpoint ainda. Decisões de UI referenciadas estão em `Figma.log` Sessão 7.
+
+| # | Ação (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Buscar perfil (`ClientProfileAdmin`/`ClientProfileClient`/`ClientProfileProvider`) | `GET /api/clientes/{uuid}` | `CLIENTE` dono · `ADMIN`/`ANALISTA` · `PRESTADOR` selecionado e ativo | O código anterior lia dados do usuário **logado** em vez do Cliente **sendo visto** (bug de origem, ver `Figma.log` Sessão 7 nota 45) — o backend deve devolver o Cliente do `{uuid}`, não o usuário do token. **Filtrar por papel**: campos de Documentação completos (endereço, CNAE, atividades secundárias) e Segmento/Tipos de Profissional só para `ADMIN`/`ANALISTA` — a visão do `CLIENTE` é mais enxuta (PRD §4.2). Para `PRESTADOR`, devolver **só** nomeEmpresa/responsavel/telefone/emailCorporativo/sobre — nunca Documentação, Financeiro ou Contratos — **e apenas se ele estiver selecionado e com contrato ativo com esse Cliente** (PRD §4.3/regra 16, `Figma.log` Sessão 8); caso contrário, 403/404. Essa checagem de "selecionado e ativo" (candidatura com `selecionado = true` num contrato cujo status não seja `Cancelado`) ainda não tem definição de corte exata — ver nota da Sessão 8 sobre o que conta como "ativo". |
+| 2 | Editar perfil — Admin (`ClientProfileAdmin`) | `PUT/PATCH /api/clientes/{uuid}` | `ADMIN` (não `ANALISTA` — PRD §3.6 nota ³) | Body só com o que esse papel edita: foto, `cnpj`, `dadosGerais` (nome, segmento, tiposProfissional, responsável, telefone, emailCorporativo), `sobre`. API rejeita Documentação/Financeiro/data de cadastro no corpo. Edição de `ADMIN` em perfil de terceiro gera `log_auditoria` (regra 14). |
+| 3 | Editar perfil — Cliente (`ClientProfileClient`) | mesmo endpoint | `CLIENTE` dono | Body só com foto, senha, `dadosGerais` (nome, responsável, telefone, emailCorporativo), `sobre`. `cnpj` nunca entra — vem do cadastro; API rejeita se vier no corpo. |
+| 4 | Verificar CNPJ (`ClientProfileAdmin`) | `POST /api/clientes/{uuid}/verificar-cnpj` | `ADMIN`/`ANALISTA` | Integra com **sintegrapi.com.br** (10 consultas grátis/mês, tempo real da Receita) como principal e **brasilapi.com.br** (grátis, sem limite, até 45 dias de atraso) como fallback quando o limite mensal estourar. Grava o resultado em Documentação — nunca editável manualmente (regra 13/PRD §4.5). |
+| 5 | Alterar status de acesso (`ClientProfileAdmin`) | `PUT /api/clientes/{uuid}/status` | `ADMIN`/`ANALISTA` | Body: `novoStatus` (`Pendente`/`Liberado`/`Bloqueado`). Mover para `Liberado` exige validar CNPJ `ATIVO` **e** Capital Social mínimo de R$ 10.000 (PRD §3.5) — o front só envia o destino escolhido, quem valida é o backend. Gera `log_auditoria`. |
+| 6 | Adicionar créditos bônus (`ClientProfileAdmin`) | `POST /api/clientes/{uuid}/creditos/bonus` | `ADMIN` (não `ANALISTA`) | Body: `valor`. Grava uma linha em `transacao_credito` **sem cobrança** (tipo a definir, ex. `BONUS_ADMIN`) — distinta da compra paga que o próprio Cliente faz em `/client/profile/{uuid}/billing` (`ClientBilling.jsx`, já coberta pela seção 4.4 do PRD). Gera `log_auditoria` (regra 14). |
+
+Nenhum desses seis pontos está implementado hoje — a única entidade que existe é `usuario`
+(seção 1), sem `cliente` nem `transacao_credito`. Entram junto com a seção 4 item 7 (entidades do
+núcleo).

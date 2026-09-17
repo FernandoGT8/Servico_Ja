@@ -89,3 +89,10 @@ export const STATUS_CONTRATO_FINALIZADOS = [
   "Finalizado",
   "Cancelado",
 ];
+
+// Status de acesso do usuário (PRD §3.5) — usado no select de "Alterar
+// Status" que ADMIN/ANALISTA edita em ClientProfileAdmin.jsx. Passar para
+// Liberado exige CNPJ ativo com Capital Social mínimo de R$ 10 mil (decidido
+// em 17/09/2026, ver Figma.log Sessão 7) — validação é do backend, o front só
+// deixa escolher o destino.
+export const STATUS_ACESSO = ["Pendente", "Liberado", "Bloqueado"];
