@@ -244,9 +244,16 @@ editada manualmente, nem pelo `ADMIN` (regra 13/§4.5). Implementação fica a c
 ### 4.1 Autenticação e Cadastro
 - [ ] Login único (`/login`) com **Spring Security + JWT**, senhas em **BCrypt**
 - [ ] **Credencial: email + senha** para todos os papéis (login por CNPJ/CPF → backlog, §8)
-- [ ] Cadastro de Cliente B2B (`/register/client`)
-- [ ] Cadastro de Prestador (`/register/provider`), com aceite de termos de uso e política
-      de privacidade
+- [ ] Cadastro de Cliente B2B em duas etapas (decisão de 17/09/2026): conta simplificada — nome,
+      telefone, email, senha, aceite de termos (`/register/client`) — e, já autenticado, perfil
+      completo — segmento, cargo, empresa, CNPJ (`/register/client/complete`).
+      **Front pronto** (`pages/FirstRegister/`, `pages/Register/`); endpoint de completar perfil
+      ainda não existe no backend — ver `@BACKEND_ANALISE.md` §8
+- [ ] Cadastro de Prestador em duas etapas: conta simplificada — nome, telefone, email, senha,
+      aceite de termos (`/register/provider`) — e, já autenticado, perfil completo — CPF,
+      CNPJ/MEI, disponibilidade, habilidades, experiência (`/register/provider/complete`).
+      **Front pronto**; endpoint de completar perfil ainda não existe no backend — ver
+      `@BACKEND_ANALISE.md` §8
 - [ ] Validação de **CNPJ** (formato + regularidade: `ATIVO` / `INAPTO` / `BAIXADO`)
 - [ ] Validação de **CPF** (prestador)
 - [ ] Validação de email (confirmação)
@@ -425,7 +432,8 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 ### 5.1 Cliente contrata
 ```
-1. Cadastro (/register/client) → validação de CNPJ → acesso Liberado
+1. Cria a conta (/register/client) → completa o perfil, já autenticado
+   (/register/client/complete) → validação de CNPJ → acesso Liberado
 2. Compra créditos (/client/profile/{uuid}/billing)
 3. Cria contrato (/client/contracts/new) → Rascunho
 4. Publica → Aguardando Prestadores
@@ -438,14 +446,15 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 ### 5.2 Prestador executa
 ```
-1. Cadastro (/register/provider) → CNPJ + documentos → acesso Liberado
-2. Completa perfil: habilidades, áreas de atuação, experiência
-3. Consulta o mural (/provider/opportunities)
-4. Candidata-se a um contrato
-5. É selecionado
-6. Executa o serviço (aprova ou contesta faltas registradas)
-7. Emite e anexa a Nota Fiscal
-8. Recebe o valor após a aprovação da NF
+1. Cria a conta (/register/provider) → completa o perfil, já autenticado
+   (/register/provider/complete): CPF, CNPJ/MEI, habilidades, áreas de atuação, experiência →
+   documentos → acesso Liberado
+2. Consulta o mural (/provider/opportunities)
+3. Candidata-se a um contrato
+4. É selecionado
+5. Executa o serviço (aprova ou contesta faltas registradas)
+6. Emite e anexa a Nota Fiscal
+7. Recebe o valor após a aprovação da NF
 ```
 
 ---
@@ -457,8 +466,9 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 | Camada | Tecnologia | Observações |
 |---|---|---|
 | **Frontend** | React + Vite | Em andamento |
-| **CSS** | Tailwind CSS | Instalado, ainda não utilizado |
-| **Roteamento** | react-router-dom v7 | Instalado, **ainda não utilizado** |
+| **CSS** | Tailwind CSS v4 | **Em uso** desde 17/09/2026 (config CSS-first, `@theme`) — telas de cadastro ainda em CSS puro por página |
+| **Roteamento** | react-router-dom v7 | **Em uso** desde 17/09/2026 (`router.jsx`, `RequireAuth`) |
+| **Ícones** | lucide-react | **Em uso** — não estava na stack original, ver `CLAUDE.md` Regra 2 |
 | **Backend** | Java + Spring Boot | API RESTful, arquitetura em camadas |
 | **Banco** | **PostgreSQL** | Modelagem relacional normalizada |
 | **Segurança** | Spring Security + JWT + BCrypt | Acesso controlado por Roles |
@@ -471,9 +481,17 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 **Site institucional**: `/` (Home + About + Details) · `/business` (Empresas) · `/partners` (Prestadores MEI)
 
-**Aplicação**: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
+**Aplicação**: `/login` · `/register/client` · `/register/client/complete` ·
+`/register/provider` · `/register/provider/complete` · `/client/contracts/new` ·
 `/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
 `/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
+
+⚠️ **Cadastro em duas etapas** (decisão de 17/09/2026, ver `Figma.log` Sessão 11):
+`/register/client` e `/register/provider` só criam a conta (login) — campos simplificados.
+`/register/client/complete` e `/register/provider/complete` completam o perfil, já autenticado
+(exigem login e o papel dono da conta), e não têm frame próprio no Figma — são as telas de
+cadastro completo que o design já desenhava para `/register/client`/`/register/provider`,
+só que agora acessadas depois da conta existir.
 
 Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.
 
@@ -605,16 +623,19 @@ O projeto será considerado **completo** quando:
 
 ## 12. Referências
 
-- **`Figma.log`** — mapeamento do design e histórico de todas as decisões
 - **`CLAUDE.md`** — convenções de código e regras de trabalho
-- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend e ordem de correção
+- **`BACKEND_ANALISE.md`** — diagnóstico do repositório do backend, o que já foi implementado no
+  front e o backlog de endpoints por módulo
 - **Figma**: `ONnLf1dmAXa8SsZfIzYd4p` — protótipo
+- **`Figma.log`** — histórico de decisões e o "porquê" de cada uma. **Local, não versionado**
+  (decisão de 17/09/2026) — existe só nesta máquina, não é sincronizado entre repositórios.
+  Nenhuma regra deste PRD depende dele.
 
 ### Repositórios
 | Repo | Conteúdo |
 |---|---|
-| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `Figma.log`, `BACKEND_ANALISE.md` |
-| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos documentos |
+| `Servico_Ja` | frontend React + Vite · **originais** de `PRD.md`, `BACKEND_ANALISE.md` |
+| `Servco-Ja-Back` | API Spring Boot · **cópias** dos mesmos dois documentos |
 
 ⚠️ Ao mudar uma regra de negócio, atualize **os dois repositórios no mesmo dia**. Foi a
 divergência entre eles que fez o backend nascer sobre o modelo errado.

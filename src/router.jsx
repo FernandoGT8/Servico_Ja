@@ -4,8 +4,10 @@ import Home from './pages/Website/Home/Home'
 import Business from './pages/Website/Business/Business'
 import Partners from './pages/Website/Partners/Partners'
 import Login from './pages/Login/Login'
-import RegisterClient from './pages/RegisterClient/RegisterClient'
-import RegisterProvider from './pages/RegisterProvider/RegisterProvider'
+import FirstRegisterClient from './pages/FirstRegister/FirstRegisterClient'
+import FirstRegisterProvider from './pages/FirstRegister/FirstRegisterProvider'
+import RegisterClient from './pages/Register/RegisterClient'
+import RegisterProvider from './pages/Register/RegisterProvider'
 import ContractNew from './pages/ContractNew/ContractNew'
 import ContractDetail from './pages/ContractDetail/ContractDetail'
 import ProviderOpportunities from './pages/ProviderOpportunities/ProviderOpportunities'
@@ -25,8 +27,9 @@ export default function AppRoutes() {
 
       {/* Autenticação — público */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register/client" element={<RegisterClient />} />
-      <Route path="/register/provider" element={<RegisterProvider />} />
+      {/* Primeira etapa do cadastro: só cria a conta (login) — Figma.log Sessão 11 */}
+      <Route path="/register/client" element={<FirstRegisterClient />} />
+      <Route path="/register/provider" element={<FirstRegisterProvider />} />
 
       {/* Área logada — exige apenas estar autenticado */}
       <Route element={<RequireAuth />}>
@@ -36,6 +39,16 @@ export default function AppRoutes() {
         <Route path="/client/profile/:uuid" element={<ClientProfile />} />
         <Route path="/client/profile/:uuid/billing" element={<ClientBilling />} />
         <Route path="/provider/profile/:uuid" element={<ProviderProfile />} />
+      </Route>
+
+      {/* Segunda etapa do cadastro: completar o perfil, já autenticado — só o
+          papel dono da conta acessa. Status continua Pendente até liberação
+          do ADMIN/ANALISTA (PRD §3.5). */}
+      <Route element={<RequireAuth allowedRoles={['CLIENTE']} />}>
+        <Route path="/register/client/complete" element={<RegisterClient />} />
+      </Route>
+      <Route element={<RequireAuth allowedRoles={['PRESTADOR']} />}>
+        <Route path="/register/provider/complete" element={<RegisterProvider />} />
       </Route>
 
       {/* Área interna do time Serviços Já! — landing pós-login de ADMIN/ANALISTA */}

@@ -17,11 +17,18 @@ A plataforma retém uma **taxa escalonada** (25/20/15% conforme dias agenciados/
 ## Fonte de Verdade
 
 1. **@PRD.md** — **fonte de verdade**. Regras de negócio, permissões e modelo de dados.
-2. **@Figma.log** — mapeamento do design + histórico de todas as decisões e por quê
+2. **@BACKEND_ANALISE.md** — **fonte de verdade** do que já está implementado e do que falta
+   para o backend (diagnóstico + backlog de endpoints por módulo).
 3. **Figma** (`ONnLf1dmAXa8SsZfIzYd4p`) — **protótipo**: esqueleto visual e referência de telas
 
 ⚠️ O Figma **não é contrato**. Onde o código precisar divergir do desenho, diverge — mas avise.
 Em divergência entre PRD e Figma, **o PRD prevalece**.
+
+⚠️ **`Figma.log` é local e não é versionado** (decisão de 17/09/2026) — histórico de decisões e
+o "porquê" por trás delas, útil como bloco de notas desta máquina, mas **nunca commitado** (já
+cai no `*.log` do `.gitignore`; foi removido do índice do repositório frontend em 17/09/2026).
+Não conte com ele existindo em outro clone do repositório — qualquer regra ou decisão que
+precise sobreviver ao time vai para o `PRD.md` ou o `BACKEND_ANALISE.md`.
 
 ---
 
@@ -42,13 +49,20 @@ Em divergência entre PRD e Figma, **o PRD prevalece**.
 
 ### Rotas (conforme Figma)
 Site: `/` · `/business` · `/partners`
-App: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
-`/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
-`/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
+App: `/login` · `/register/client` · `/register/client/complete` · `/register/provider` ·
+`/register/provider/complete` · `/client/contracts/new` · `/contracts/{uuid}` ·
+`/provider/opportunities` · `/client/profile/{uuid}` · `/client/profile/{uuid}/billing` ·
+`/provider/profile/{uuid}` · `/admin` *(backlog)*
 
 ⚠️ **`/contracts/{uuid}` sem prefixo de papel** (decisão de 17/09/2026, ver `Figma.log` §13):
 a tela já era compartilhada entre Cliente e Prestador (o Figma desenha as duas visões), só a
 URL tinha "client" à toa. `/client/contracts/new` continua exclusivo do Cliente.
+
+⚠️ **Cadastro em duas etapas** (decisão de 17/09/2026, ver `Figma.log` Sessão 11):
+`/register/client` e `/register/provider` só criam a conta (nome, telefone, email, senha,
+termos). `/register/client/complete` e `/register/provider/complete` completam o perfil
+(segmento/CNPJ ou CPF/CNPJ-MEI/habilidades) já autenticado, protegidas por `RequireAuth` com
+o papel dono da conta — status continua `Pendente` até a liberação do `ADMIN`/`ANALISTA`.
 
 Breakpoints: **Desktop 1440px** / **Mobile 375px**.
 
@@ -99,13 +113,35 @@ Errar qualquer uma destas quebra o produto:
 
 ## Estado Atual do Código
 
-O código em `src/` **ainda não reflete o design**: navegação por `useState` + `localStorage`
-(sem `react-router`, embora instalado), CSS puro por componente (Tailwind instalado e não
-usado), componentes `Header`/`Footer`/`Login`/`SignUp`/`AdminForm`/`Dashboard`/`ProtectedPage`,
-e backend esperado em `http://localhost:8080/api/usuarios/{login,registrar}`.
+O código em `src/` já reflete boa parte do design (atualizado em 17/09/2026 — histórico da
+migração em `Figma.log` §9):
 
-**Migração para `react-router` com as rotas reais está acordada**, mas só depois de fechar
-modelagem, permissões e convenções.
+- **Roteamento**: `react-router-dom` em uso — `BrowserRouter` (`App.jsx`), rotas centralizadas
+  em `router.jsx`. `RequireAuth` (`components/RequireAuth/`) protege as rotas logadas, aceita
+  `allowedRoles` e renderiza a `Sidebar` + `Outlet`.
+- **CSS**: Tailwind v4 (config CSS-first, tokens `--color-*`/`--bg-*` em `styles/variables.css`
+  via `@theme`) é o padrão em todo componente novo (`Header`, `Footer`, `Sidebar`,
+  `ClientProfile*`, `ContractDetail*`, `ClientBilling*`, `ContractNew`, `Register*`,
+  `FirstRegister*`...). `Login.jsx` é a única tela ainda em CSS puro colocado por página — não
+  foi migrada.
+- **Padrão de dispatcher por papel**: `ClientProfile.jsx`, `ContractDetail.jsx` e
+  `ClientBilling.jsx` só decidem qual visão renderizar (`*Admin`/`*Client`/`*Provider`, conforme
+  `user.tipo`), com UI compartilhada em `*Fields.jsx`. Siga esse padrão para qualquer tela nova
+  que precise de 2+ visões por papel.
+- **Padrão de pasta por recurso**: telas que compartilham dado ou fluxo vivem juntas numa
+  pasta só (`pages/ClientProfile/`, `pages/ContractDetail/`, `pages/ClientBilling/`,
+  `pages/Register/`, `pages/FirstRegister/`), com átomos de UI num `*Fields.jsx` + classes
+  Tailwind num `*fieldsUtils.js` (mesma convenção de `ContractFormFields.jsx`/
+  `contractFormUtils.js`) — nunca importados entre pastas diferentes, cada recurso é
+  autocontido.
+- **Autenticação**: `AuthContext`/`useAuth` guardam `token` + `user` no `localStorage`;
+  `authService.js` chama `POST /api/usuarios/{login,registrar}`. Em dev
+  (`import.meta.env.DEV`), `login()` primeiro tenta um usuário fixo de `mockUsers.js` antes de
+  bater no backend.
+- **Cadastro em duas etapas** desde 17/09/2026 — ver "Rotas" acima e `Figma.log` Sessões 11–13.
+
+Praticamente toda ação que depende do backend segue marcada `TODO` no front — o backend real
+(`Servco-Ja-Back`) ainda não implementa nenhuma delas (ver `BACKEND_ANALISE.md` §6–§8).
 
 ---
 
@@ -114,7 +150,7 @@ modelagem, permissões e convenções.
 1. **Plano antes de mudanças complexas** — Proponha antes de implementar (2+ arquivos ou
    comportamento existente)
 2. **Sem deps externas sem permissão** — Vanilla por design (exceto React/Vite/Tailwind/
-   react-router)
+   react-router/lucide-react)
 3. **Comentários em português explicam "por quê"** — Código em inglês, foco no contexto não óbvio
 4. **Justifique novos arquivos** — Explique por quê não pode ir em arquivo existente
 5. **Avise conflitos com @PRD.md ou com o Figma** — Cite a seção que conflita, proponha opções,
@@ -160,8 +196,11 @@ modelagem, permissões e convenções.
   (`permitAll()`), credenciais commitadas no GitHub, modelo de 1 tabela, zero testes.
   A documentação já foi sincronizada lá (branch `update-info`); o código, não.
 
-⚠️ **Dois repositórios, mesma documentação.** `PRD.md`, `Figma.log` e `BACKEND_ANALISE.md` têm
-cópia em `Servco-Ja-Back`. Mudou regra de negócio? Atualize os dois no mesmo dia.
+⚠️ **Dois repositórios, mesma documentação.** `PRD.md` e `BACKEND_ANALISE.md` têm cópia em
+`Servco-Ja-Back` — são os dois arquivos versionados e compartilhados pelo time. Mudou regra de
+negócio? Atualize os dois no mesmo dia. `Figma.log` **não** entra nessa sincronização — é local
+e não versionado (ver "Fonte de Verdade" acima); cada máquina mantém o seu, sem cobrança de
+paridade entre eles.
 
 A matriz de permissões está em `@PRD.md` §3.6. Ver `@PRD.md` §9 para o resto.
 
@@ -176,4 +215,4 @@ A matriz de permissões está em `@PRD.md` §3.6. Ver `@PRD.md` §9 para o resto
 
 ---
 
-**Nota**: decisões críticas estão em `@PRD.md` e `@Figma.log`. Em dúvida, pergunte.
+**Nota**: decisões críticas estão em `@PRD.md` e `@BACKEND_ANALISE.md`. Em dúvida, pergunte.

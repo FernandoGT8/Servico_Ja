@@ -3,7 +3,11 @@
 **Data**: 15/09/2026
 **Repositório**: `github.com/FernandoGT8/Servco-Ja-Back`
 **Commits**: 3 (`Primeiros passos` → `Implementar autenticação JWT` → `Atualizar configurações do banco`)
-**Referência**: `PRD.md` (fonte de verdade) · `Figma.log` (histórico de decisões)
+**Referência**: `PRD.md` (fonte de verdade das regras de negócio) · este arquivo (fonte de
+verdade do que está implementado e do backlog de endpoints). `Figma.log` (histórico de decisões
+e o "porquê" de cada uma) é **local, não versionado** — útil como contexto extra para quem tem o
+arquivo à mão, mas nenhuma regra aqui depende dele: tudo que importa para o backend está escrito
+diretamente nas seções abaixo.
 
 ---
 
@@ -254,3 +258,39 @@ endpoint ainda. Decisões de UI referenciadas estão em `Figma.log` Sessão 7.
 Nenhum desses seis pontos está implementado hoje — a única entidade que existe é `usuario`
 (seção 1), sem `cliente` nem `transacao_credito`. Entram junto com a seção 4 item 7 (entidades do
 núcleo).
+
+---
+
+## 8. Backlog de endpoints — Cadastro em duas etapas (17/09/2026)
+
+### O que já foi implementado no front
+
+O cadastro de Cliente e Prestador foi dividido em duas telas — a conta é criada primeiro
+(nome/telefone/email/senha), o resto do perfil é preenchido depois, já autenticado:
+
+- **Primeira etapa** (`pages/FirstRegister/`) — `FirstRegisterClient.jsx` e
+  `FirstRegisterProvider.jsx`, rotas `/register/client` e `/register/provider`. Só criam a
+  conta: chamam `POST /api/usuarios/registrar` (já existe, sem mudança de contrato) + login
+  automático, e navegam para a segunda etapa.
+- **Segunda etapa** (`pages/Register/`) — `RegisterClient.jsx` e `RegisterProvider.jsx`, rotas
+  `/register/client/complete` e `/register/provider/complete` (protegidas: exigem estar
+  autenticado com o papel `CLIENTE`/`PRESTADOR`, respectivamente). Completam o resto do perfil,
+  mas **ficaram sem endpoint algum** — só a criação de conta da primeira etapa é uma chamada
+  real hoje.
+- Cada etapa tem sua própria pasta com um `*Fields.jsx` (átomos de UI: campo de texto, select,
+  radio, checkbox) e um `*fieldsUtils.js` (classes Tailwind compartilhadas) — puramente
+  organização de front, não afeta contrato de API.
+- Bug corrigido de passagem: o Prestador mandava `tipo: 'TRABALHADOR'` no cadastro (não existe
+  no enum); agora manda `'PRESTADOR'`.
+
+### O que falta implementar no backend
+
+| # | Ação (tela) | Endpoint | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Criar conta (`FirstRegisterClient`/`FirstRegisterProvider`) | `POST /api/usuarios/registrar` (já existe) | público | Sem mudança de contrato: `nome`, `email`, `telefone`, `senha`, `senhaConfirm`, `tipo` (`CLIENTE`/`PRESTADOR`). O front só passou a chamar isso **antes** de coletar o resto do perfil — não depois. |
+| 2 | Completar perfil do Cliente (`RegisterClient`, `/register/client/complete`) | `PATCH /api/clientes/{uuid}` (mesmo endpoint da seção 7, ação 2/3) | `CLIENTE` dono, recém-criado (status `Pendente`) | Body: segmento, tipoProfissionalInteresse, cargo, nomeEmpresa, cnpj, tamanhoOperacao, jaTrabalhaTerceirizados, motivoCadastro. Preenche Dados Gerais/Documentação do PRD §4.2 pela primeira vez — depois disso o fluxo normal de edição (seção 7) assume. |
+| 3 | Completar perfil do Prestador (`RegisterProvider`, `/register/provider/complete`) | `PATCH /api/prestadores/{uuid}` (endpoint novo, ainda não coberto por nenhuma seção) | `PRESTADOR` dono, recém-criado (status `Pendente`) | Body: cpf, estado, cidade, meiCnpj/cnpj, clt, disponibilidade, areaAtuacao (até 5), experiencia, nivelConhecimento, terceirizado, motivo. Sem entidade `prestador` ainda (só `usuario`, seção 1) — entra junto com o núcleo (seção 4 item 7). |
+
+Front hoje não chama nenhum dos itens 2/3 de verdade — `handleCompleteProfile` nas duas telas é
+`TODO` e só navega para a Home do papel (`getHomeRoute`), igual ao padrão já usado no restante do
+módulo de Perfil (seção 7).
