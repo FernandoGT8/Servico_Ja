@@ -1,55 +1,28 @@
-import { useAuth } from '@/contexts/useAuth'
-import './Dashboard.css'
+import { useAuth } from "@/contexts/useAuth";
+import DashboardAdmin from "./DashboardAdmin";
+import DashboardClient from "./DashboardClient";
+import DashboardProvider from "./DashboardProvider";
 
+// /dashboard é a landing pós-login de todo papel (Login.jsx redireciona
+// todo mundo pra cá — getHomeRoute só desvia CLIENTE/PRESTADOR quando eles
+// já têm uuid). Este componente só decide qual visão renderizar, mesmo
+// padrão de dispatcher de ClientProfile.jsx/ContractDetail.jsx.
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   if (!user) {
-    return <div className="dashboard-loading">Carregando...</div>
+    return (
+      <div className="w-full py-12 text-center text-(--color-muted)">Carregando...</div>
+    );
   }
 
-  return (
-    <div className="dashboard-container">
-      <div className="dashboard-content">
-        <div className="welcome-section">
-          <h2>Bem-vindo, {user.nome}!</h2>
-          <p>Você está logado como <strong>{user.tipo}</strong></p>
-        </div>
+  if (user.tipo === "ADMIN" || user.tipo === "ANALISTA") {
+    return <DashboardAdmin />;
+  }
 
-        <div className="user-info-card">
-          <h3>Informações da Conta</h3>
-          <div className="info-row">
-            <label>Email:</label>
-            <span>{user.email}</span>
-          </div>
-          <div className="info-row">
-            <label>Tipo de Usuário:</label>
-            <span>{user.tipo}</span>
-          </div>
-          <div className="info-row">
-            <label>Nome:</label>
-            <span>{user.nome}</span>
-          </div>
-          <div className="info-row">
-            <label>Telefone:</label>
-            <span>{user.telefone || 'Não informado'}</span>
-          </div>
-          <div className="info-row">
-            <label>Membro desde:</label>
-            <span>{new Date(user.criadoEm).toLocaleDateString('pt-BR')}</span>
-          </div>
-        </div>
+  if (user.tipo === "CLIENTE") {
+    return <DashboardClient />;
+  }
 
-        <div className="dashboard-section">
-          <h3>Próximas Funcionalidades</h3>
-          <ul>
-            <li>📋 Gerenciar Serviços</li>
-            <li>💬 Chat com Prestadores</li>
-            <li>📊 Relatórios e Estatísticas</li>
-            <li>⚙️ Configurações da Conta</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  )
+  return <DashboardProvider />;
 }

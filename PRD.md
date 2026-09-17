@@ -313,7 +313,11 @@ editada manualmente, nem pelo `ADMIN` (regra 13/§4.5). Implementação fica a c
       "já atuou como terceirizado?"
 - [ ] **Contratos**: histórico
 - [ ] **Sobre**: biografia do prestador
-- [ ] ❌ **Sem painel financeiro** — o prestador apenas recebe após o contrato
+- [ ] ❌ **Sem painel de gestão de crédito** — o prestador não compra crédito, não vê taxa nem
+      saldo da plataforma (isso é exclusivo do Cliente, §4.4). O dashboard (`/dashboard`) mostra
+      pra ele um **resumo de pagamentos, só leitura** — ganhos do mês, valores recebidos (NF
+      paga) e a receber (aguardando pagamento final) — decidido em 18/09/2026: não é o mesmo
+      painel financeiro do Cliente, só reflete o que ele recebe após a NF aprovada
 
 ### 4.4 Painel de Créditos (`/client/profile/{uuid}/billing`) — **exclusivo do Cliente**
 - [ ] Créditos atuais
@@ -393,6 +397,9 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 - [ ] Filtros: **tipo de contrato** (Diária/Empreitada) e **tipo de serviço**
 - [ ] Candidatura ao contrato
 - [ ] Campo **Promocode** → ⏸️ backlog (§8)
+- [ ] **Favoritar contrato** → ⏸️ backlog (§8) — o dashboard do Prestador (18/09/2026) já reserva
+      um card de "Contratos Favoritos", mas não há botão de favoritar no mural nem endpoint
+      ainda; entra junto quando essa tela ganhar o recurso
 
 ### 4.7 Ciclo de vida do contrato
 
@@ -563,6 +570,8 @@ O projeto será considerado **completo** quando:
 - ⏸️ **`/admin`** — tela inicial dos Administradores com dados da plataforma
 - ⏸️ **"Nível" do prestador** — reputação acumulada ao longo dos contratos executados
 - ⏸️ **Promocode** — cupom de R$ X em créditos para novos clientes testarem a plataforma
+- ⏸️ **Favoritar contrato** — botão no mural de oportunidades (§4.6) para o Prestador marcar um
+  contrato sem se candidatar ainda; sem UI, endpoint ou modelo de dados hoje
 
 ### Fora do escopo (v1)
 - App mobile nativo (web responsivo apenas)

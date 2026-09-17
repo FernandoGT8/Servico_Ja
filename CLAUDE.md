@@ -90,7 +90,10 @@ Errar qualquer uma destas quebra o produto:
    contratos que já congelaram o percentual não são recalculados.
 8. **Cálculo de valor**: na **Diária** o sistema calcula o **total** (diárias × valor/dia); na
    **Empreitada** calcula o **valor/dia** (total ÷ dias).
-9. **Painel financeiro é exclusivo do Cliente.** O Prestador só recebe após a NF aprovada.
+9. **Painel de gestão de crédito é exclusivo do Cliente** (compra, saldo, taxa — `/client/profile/{uuid}/billing`).
+   O Prestador só recebe após a NF aprovada; no `/dashboard` ele vê um **resumo de pagamentos, só
+   leitura** (ganhos do mês, recebidos, a receber) — não é o mesmo painel, sem crédito/taxa nem
+   ação de gestão (decidido em 18/09/2026, ver `PRD.md` §4.3).
 10. **Faltas descontam do valor**: o **Cliente registra**, o **Prestador aprova** a remoção.
 11. **Status de acesso** (`Pendente`/`Liberado`/`Bloqueado`) é determinado pela validação do CNPJ.
     `Pendente` navega (vê mural e perfis, completa o cadastro) mas **não transaciona**.

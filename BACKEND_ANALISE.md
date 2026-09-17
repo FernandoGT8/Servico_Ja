@@ -294,3 +294,33 @@ O cadastro de Cliente e Prestador foi dividido em duas telas — a conta é cria
 Front hoje não chama nenhum dos itens 2/3 de verdade — `handleCompleteProfile` nas duas telas é
 `TODO` e só navega para a Home do papel (`getHomeRoute`), igual ao padrão já usado no restante do
 módulo de Perfil (seção 7).
+
+---
+
+## 9. Backlog de endpoints — módulo de Dashboard (17/09/2026)
+
+`/dashboard` é a landing pós-login de todo papel (`Login.jsx` redireciona todo mundo pra cá).
+`Dashboard.jsx` virou dispatcher (mesmo padrão das seções 6–7), com as três visões já no front:
+`DashboardAdmin.jsx` (ADMIN/ANALISTA), `DashboardClient.jsx` (CLIENTE) e `DashboardProvider.jsx`
+(PRESTADOR).
+
+| # | Seção (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Visão Geral Financeira (`DashboardAdmin`) | `GET /api/dashboard/admin` | `ADMIN` | Agregado de **toda a plataforma**: pagamentos restantes a prestadores, créditos reservados de todos os clientes, saldo mensal (taxa retida). É a linha "Auditoria financeira da plataforma" da matriz do PRD §3.6 — **exclusiva do `ADMIN`**, o `ANALISTA` não recebe esse bloco (front já esconde a seção quando `user.tipo === 'ANALISTA'`; o backend deveria 403 se o `ANALISTA` tentar chamar só essa parte, caso vire endpoint separado). |
+| 2 | Visão Geral Contratos (`DashboardAdmin`) | mesmo endpoint, campo `contratos` | `ADMIN`/`ANALISTA` | Três blocos (`criados`/`abertos`/`finalizados`), cada um com contagem, timestamp da última atualização e os 3 contratos mais recentes (`itens: [{id}]`). O link "Ver mais" de cada card já está desabilitado no front — nenhum papel tem hoje uma tela de listagem de contratos (Sidebar mantém "Contratos" como "Em breve" pra ADMIN/ANALISTA/CLIENTE); precisa da rota antes de habilitar. |
+| 3 | Visão Geral Usuários (`DashboardAdmin`) | mesmo endpoint, campo `usuarios` | `ADMIN`/`ANALISTA` | Contagens: clientes ativos (com contrato lançado), prestadores ativos (que atuaram) e clientes inativos (com crédito mas sem contrato). Sem filtro de papel — a matriz do PRD §3.6 não restringe esse dado ao `ANALISTA`. |
+| 4 | Visão Geral Financeira (`DashboardClient`) | `GET /api/dashboard/cliente` | `CLIENTE` dono | Escopo por registro (PRD §3.6): créditos restantes, reservados e usados **do próprio Cliente**, não agregado da plataforma — painel financeiro é exclusivo do Cliente (regra 9), cada papel só vê o seu. Mesmos dados de `conta_credito`/`transacao_credito` já usados em `ClientBilling.jsx`, só que resumidos para o mês corrente. |
+| 5 | Visão Geral Contratos (`DashboardClient`) | mesmo endpoint, campo `contratos` | `CLIENTE` dono | Mesmo formato do item 2, mas escopado aos contratos **do próprio Cliente**. |
+| 6 | "Novo Contrato" / "Adicionar Créditos" (`DashboardClient`) | sem endpoint novo | `CLIENTE` | Botões só navegam para `/client/contracts/new` e `/client/profile/{uuid}/billing` — reaproveitam os endpoints já cobertos nas seções 4.4 e 6 (itens 1/2), não precisam de rota própria. |
+| 7 | Visão Geral Financeira (`DashboardProvider`) | `GET /api/dashboard/prestador` | `PRESTADOR` dono | **Não é o painel de gestão de crédito do Cliente** (PRD §4.4, exclusivo dele) — resumo de pagamentos só leitura: ganhos do mês, valores recebidos (NF paga) e a receber (aguardando pagamento final). Sem crédito, taxa ou saldo da plataforma. Distinção decidida em 18/09/2026 — PRD §4.3/regra 9 do `CLAUDE.md` foram atualizadas pra deixar isso explícito (o design original conflitava com "sem painel financeiro para o Prestador"). |
+| 8 | Visão Geral Contratos (`DashboardProvider`) | mesmo endpoint, campo `contratos` | `PRESTADOR` dono | Três blocos: `atual` (o contrato em execução — badge com o ID em vez de contagem), `favoritos` (contagem — **depende do recurso "favoritar contrato" ainda não implementado**, PRD §4.6/§8) e `finalizados` (contagem). Mesmo formato de item/lista dos demais `ContractOverviewCard`. |
+
+Nenhum dos oito pontos está implementado — não existe endpoint de dashboard nem agregação alguma
+hoje (a única entidade é `usuario`, seção 1). O item 8 (`favoritos`) também depende de uma
+entidade que ainda não existe em lugar nenhum (nem no modelo, nem no mural) — ver PRD §8.
+
+O "medidor" de 4 barras decrescentes sob cada `StatCard` (Figma) representa o valor do card como
+**proporção do valor total mensal** (ex.: Créditos Reservados / valor total agenciado no mês) —
+confirmado em conversa, 18/09/2026. Fica de **backlog**: falta o endpoint que dá o valor total
+mensal e a proporção de cada card; até lá o front mantém as larguras fixas do desenho, sem dado
+real ligado (`ProportionalMeter` em `DashboardFields.jsx`).
