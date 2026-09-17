@@ -43,8 +43,12 @@ Em divergência entre PRD e Figma, **o PRD prevalece**.
 ### Rotas (conforme Figma)
 Site: `/` · `/business` · `/partners`
 App: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
-`/client/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
+`/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
 `/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
+
+⚠️ **`/contracts/{uuid}` sem prefixo de papel** (decisão de 17/09/2026, ver `Figma.log` §13):
+a tela já era compartilhada entre Cliente e Prestador (o Figma desenha as duas visões), só a
+URL tinha "client" à toa. `/client/contracts/new` continua exclusivo do Cliente.
 
 Breakpoints: **Desktop 1440px** / **Mobile 375px**.
 

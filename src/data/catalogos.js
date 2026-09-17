@@ -21,6 +21,38 @@ export const TIPOS_SERVICO = [
   "Portaria e Recepção",
 ];
 
+// UFs brasileiras — dado fixo e público, não é catálogo de negócio (diferente
+// de tipo_servico/curso/habilidade, que ainda não têm endpoint).
+export const ESTADOS_BR = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+];
+
 export const CURSOS = [
   "NR-06 — Equipamento de Proteção Individual",
   "NR-10 — Segurança em Instalações Elétricas",
@@ -30,4 +62,30 @@ export const CURSOS = [
   "NR-33 — Espaços Confinados",
   "NR-35 — Trabalho em Altura",
   "Primeiros Socorros",
+];
+
+// Ciclo de vida do contrato (PRD §4.7) — usado no select de Status que só o
+// ADMIN/ANALISTA edita (ContractDetailAdmin.jsx). Sem validação de transição
+// aqui: o front deixa escolher qualquer estado, quem garante a regra de
+// negócio é o backend.
+export const STATUS_CONTRATO = [
+  "Rascunho",
+  "Aguardando Prestadores",
+  "Prestador Selecionado",
+  "Em Execução",
+  "Concluído",
+  "NF Emitida",
+  "Aguardando Pagamento",
+  "Finalizado",
+  "Cancelado",
+];
+
+// Estados finais — "Adicionar Dias" (extensão de prazo) só é permitido fora
+// destes (decidido em 17/09/2026, ver Figma.log §15).
+export const STATUS_CONTRATO_FINALIZADOS = [
+  "Concluído",
+  "NF Emitida",
+  "Aguardando Pagamento",
+  "Finalizado",
+  "Cancelado",
 ];

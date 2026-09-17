@@ -1,279 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCidadesPorEstado } from "@/services/ibgeService";
-import { TIPOS_SERVICO, CURSOS } from "@/data/catalogos";
-
-// Mesma convenção de ClientProfile.jsx/ClientBilling.jsx — ainda não existe
-// um design system compartilhado, então repetimos as classes localmente.
-const inputClassName =
-  "w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-(--color-heading) outline outline-2 -outline-offset-2 outline-(--color-border-subtle) transition-colors placeholder:text-(--color-muted) focus:outline-(--color-accent) disabled:cursor-not-allowed disabled:bg-(--bg-subtle) disabled:text-(--color-muted)";
-const labelClassName =
-  "text-xs font-bold uppercase tracking-wide text-(--color-muted-light)";
-const primaryButtonClassName =
-  "rounded-full bg-(--color-heading) px-6 py-4 text-sm font-bold font-dm-sans text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
-const secondaryButtonClassName =
-  "rounded-full border border-(--color-border-subtle) px-6 py-4 text-sm font-bold font-dm-sans text-(--color-heading) transition-colors hover:bg-(--bg-subtle)";
-
-// UFs brasileiras — dado fixo e público, não é catálogo de negócio (diferente
-// de tipo_servico/curso/habilidade, que ainda não têm endpoint).
-const ESTADOS_BR = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
-  "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC",
-  "SP", "SE", "TO",
-];
-
-function Section({ title, children }) {
-  return (
-    <section className="flex flex-col gap-6 border-b border-(--color-border-subtle) pb-10 last:border-b-0 last:pb-0">
-      <h2 className="text-xl leading-7 font-semibold text-(--color-heading) sm:text-2xl sm:leading-8">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function FormField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-  type = "text",
-  className = "",
-}) {
-  return (
-    <label className={`flex flex-col gap-2 ${className}`}>
-      <span className={labelClassName}>{label}</span>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        disabled={disabled}
-        readOnly={!onChange}
-        onChange={
-          onChange ? (event) => onChange(event.target.value) : undefined
-        }
-        className={inputClassName}
-      />
-    </label>
-  );
-}
-
-function RadioOption({ label, checked, onChange }) {
-  return (
-    <label className="flex cursor-pointer items-center gap-2 font-work-sans text-base font-medium tracking-tight text-(--color-heading)">
-      <span
-        className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-          checked ? "border-(--color-heading)" : "border-(--color-muted-light)"
-        }`}
-      >
-        {checked && (
-          <span className="h-2.5 w-2.5 rounded-full bg-(--color-heading)" />
-        )}
-      </span>
-      <input
-        type="radio"
-        checked={checked}
-        onChange={onChange}
-        className="sr-only"
-      />
-      {label}
-    </label>
-  );
-}
-
-function SimNaoField({ label, value, onChange }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <span className={labelClassName}>{label}</span>
-      <div className="flex items-center gap-4">
-        <RadioOption label="Sim" checked={value === true} onChange={() => onChange(true)} />
-        <RadioOption label="Não" checked={value === false} onChange={() => onChange(false)} />
-      </div>
-    </div>
-  );
-}
-
-function ContractTypeToggle({ value, onChange }) {
-  const opcoes = [
-    { valor: "DIARIA", rotulo: "Diária" },
-    { valor: "EMPREITADA", rotulo: "Empreitada" },
-  ];
-  return (
-    <div className="flex items-center gap-2">
-      {opcoes.map((opcao) => (
-        <button
-          key={opcao.valor}
-          type="button"
-          onClick={() => onChange(opcao.valor)}
-          className={`rounded-full px-3 py-1.5 text-sm font-bold font-dm-sans transition-colors ${
-            value === opcao.valor
-              ? "bg-(--color-heading) text-white"
-              : "text-(--color-muted) hover:bg-(--bg-subtle)"
-          }`}
-        >
-          {opcao.rotulo}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function formatDateBR(isoDate) {
-  const [, mes, dia] = isoDate.split("-");
-  return `${dia}/${mes}`;
-}
-
-function DateListField({ label, dates, onAdd, onRemove }) {
-  const [novaData, setNovaData] = useState("");
-
-  function handleAdd() {
-    if (!novaData) return;
-    onAdd(novaData);
-    setNovaData("");
-  }
-
-  return (
-    <div className="flex flex-1 flex-col gap-3">
-      <span className={labelClassName}>{label}</span>
-      <div className={`${inputClassName} flex min-h-16 flex-wrap items-center gap-2`}>
-        {dates.length === 0 && (
-          <span className="text-(--color-muted)">Nenhuma data adicionada.</span>
-        )}
-        {dates.map((data, index) => (
-          <span
-            key={`${data}-${index}`}
-            className="flex items-center gap-1 rounded-full bg-(--bg-subtle) px-3 py-1 text-xs font-semibold text-(--color-heading)"
-          >
-            {formatDateBR(data)}
-            <button
-              type="button"
-              onClick={() => onRemove(index)}
-              aria-label={`Remover ${formatDateBR(data)}`}
-              className="text-(--color-muted) hover:text-(--color-danger)"
-            >
-              ×
-            </button>
-          </span>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="date"
-          value={novaData}
-          onChange={(event) => setNovaData(event.target.value)}
-          className={`${inputClassName} flex-1`}
-        />
-        <button type="button" onClick={handleAdd} className={secondaryButtonClassName}>
-          Adicionar
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function TagMultiSelect({
-  label,
-  values,
-  onChange,
-  sugestoes = [],
-  placeholder,
-  permitirLivre = true,
-}) {
-  const [novoValor, setNovoValor] = useState("");
-
-  function handleAdd(valor) {
-    const limpo = valor.trim();
-    if (!limpo || values.includes(limpo)) return;
-    onChange([...values, limpo]);
-    setNovoValor("");
-  }
-
-  function handleRemove(index) {
-    onChange(values.filter((_, i) => i !== index));
-  }
-
-  const sugestoesDisponiveis = sugestoes.filter((s) => !values.includes(s));
-
-  return (
-    <div className="flex flex-col gap-3">
-      <span className={labelClassName}>{label}</span>
-      <div className="flex flex-wrap gap-2">
-        {values.map((valor, index) => (
-          <span
-            key={`${valor}-${index}`}
-            className="flex items-center gap-2 rounded-full border border-(--color-border-subtle) bg-white px-4 py-2 text-sm text-(--color-heading)"
-          >
-            {valor}
-            <button
-              type="button"
-              onClick={() => handleRemove(index)}
-              aria-label={`Remover ${valor}`}
-              className="text-(--color-muted) hover:text-(--color-danger)"
-            >
-              ×
-            </button>
-          </span>
-        ))}
-        {values.length === 0 && (
-          <p className="text-sm text-(--color-muted)">Nenhum item adicionado ainda.</p>
-        )}
-      </div>
-      {sugestoesDisponiveis.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {sugestoesDisponiveis.map((sugestao) => (
-            <button
-              key={sugestao}
-              type="button"
-              onClick={() => handleAdd(sugestao)}
-              className="rounded-full border border-dashed border-(--color-muted-light) px-4 py-2 text-xs font-semibold text-(--color-muted)"
-            >
-              + {sugestao}
-            </button>
-          ))}
-        </div>
-      )}
-      {permitirLivre && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={novoValor}
-            onChange={(event) => setNovoValor(event.target.value)}
-            placeholder={placeholder}
-            className={`${inputClassName} flex-1`}
-          />
-          <button type="button" onClick={() => handleAdd(novoValor)} className={secondaryButtonClassName}>
-            Adicionar
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BackArrowIcon() {
-  return (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 12H5m0 0l7 7m-7-7l7-7" />
-    </svg>
-  );
-}
-
-function formatBRL(value) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    value || 0,
-  );
-}
+import { TIPOS_SERVICO, CURSOS, ESTADOS_BR } from "@/data/catalogos";
+import {
+  Section,
+  FormField,
+  SimNaoField,
+  ContractTypeToggle,
+  DateListField,
+  TagMultiSelect,
+  BackArrowIcon,
+} from "@/components/ContractForm/ContractFormFields";
+import {
+  inputClassName,
+  labelClassName,
+  primaryButtonClassName,
+  secondaryButtonClassName,
+  formatBRL,
+} from "@/components/ContractForm/contractFormUtils";
 
 export default function ContractNew() {
   const navigate = useNavigate();
@@ -556,7 +300,7 @@ export default function ContractNew() {
                   verdade após a seleção do prestador, registrada pelo Cliente
                   e aprovada pelo Prestador (PRD §4.7/§4.8). Aparece aqui só
                   para casar com o desenho do Figma; o fluxo real acontece em
-                  /client/contracts/{"{uuid}"}. */}
+                  /contracts/{"{uuid}"} — ver ContractDetail.jsx. */}
 
               <div className="grid gap-6 sm:grid-cols-3">
                 <SimNaoField

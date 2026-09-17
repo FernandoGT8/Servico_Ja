@@ -463,3 +463,79 @@ Respostas do Luiz que fecham as pendências levantadas no mapeamento:
   compensatório para recálculo financeiro pós-seleção.
 - **Endereço da obra** — o contrato só tem cidade e estado.
 - **Ações por estado do contrato** — editar/cancelar em `Rascunho` ≠ em `Em Execução`
+
+---
+
+## 13. Sessão 4 (17/09/2026) — Rota de contrato compartilhada
+
+29. **`/client/contracts/{uuid}` virou `/contracts/{uuid}`.** A tela já era compartilhada entre
+    Cliente e Prestador — o próprio checklist do Figma (§3) descreve essa rota como "Tela do
+    Contrato B2B (Cliente/Prestadores)" — só a URL implementada tinha o prefixo "client" à toa.
+    Não é uma mudança de regra de negócio, só a URL passou a refletir quem já podia acessá-la.
+    `/client/contracts/new` (criação) continua exclusivo do Cliente — publicar um contrato
+    continua sendo ação só dele. `CLAUDE.md` e `PRD.md` (§4.5, §6.2) atualizados no mesmo dia.
+30. **Visão do Prestador em `/contracts/{uuid}`** (mockup novo, Sessão 4): mostra Tipo de
+    contrato, ID, Status, Tipo de serviço, Localização, Financeiro **sem** percentual/valor de
+    taxa e sem Nota Fiscal (dados exclusivos do Cliente, regra 9/§4.4), Operação completa,
+    Cursos/Habilidades e Descrição — tudo somente leitura — **sem** o bloco de Candidaturas
+    (não faz sentido o Prestador ver quem mais se candidatou) e com um único botão de ação,
+    "Me Candidatar", no lugar de Editar/Adicionar Dias/Pagamento Final/Finalizar.
+
+---
+
+## 14. Sessão 5 (17/09/2026) — Três visões de /contracts/{uuid}, escopo de edição por papel
+
+O mockup completo (Percentual/Valor de Taxa, Nota Fiscal, Candidaturas, Pagamento Final,
+Finalizar Contrato) descrito na Sessão 4 **não é a visão do Cliente** — é a do `ADMIN`/`ANALISTA`
+(acesso total, PRD §3.1). O Cliente tem uma tela reduzida própria. Componente renomeado:
+`ContractDetailClient.jsx` (o que era a visão "completa") virou `ContractDetailAdmin.jsx`;
+`ContractDetailClient.jsx` foi reescrito do zero para a visão real do Cliente.
+
+31. **Visão do Cliente**: Tipo de contrato, ID, Status, Tipo de serviço, Localização —
+    **sempre somente leitura**. Financeiro só com Data de Início/Encerramento, Valor Total e
+    Valor por Dia (**sem** Percentual/Valor de Taxa, **sem** Nota Fiscal — exclusivos do time
+    interno). "Editar Contrato" só desbloqueia **Descrição, Cursos exigidos, Habilidades
+    desejadas e Dias de falta** — nada além disso, nem para o Cliente que é dono do contrato.
+    Botões: Voltar, Editar Contrato, Adicionar Dias — **sem** Pagamento Final nem Finalizar
+    Contrato (isso é exclusivo do time interno, ver regra 33).
+32. **Candidaturas mantido na visão do Cliente** mesmo sem estar no mockup colado nesta sessão —
+    confirmado em conversa: é o Cliente quem seleciona o prestador (PRD §3.6), então tirar essa
+    seção da tela dele deixaria a seleção só nas mãos do `ADMIN`. Ambas as visões (Cliente e
+    Admin) mostram Candidaturas e o botão Selecionar.
+33. **Visão do `ADMIN`/`ANALISTA`** (`ContractDetailAdmin.jsx`) mantém tudo que a Sessão 4 já
+    descrevia, mas o escopo de "Editar Contrato" ficou mais estreito do que o código anterior
+    permitia: só desbloqueia **Status** (select com os 8 estados do ciclo de vida, PRD §4.7, sem
+    validação de transição no front), **Tipo de Serviço**, o **valor de entrada** (por dia ou
+    total, conforme o tipo — o oposto continua calculado e travado) e **Nota Fiscal** (agora com
+    upload de arquivo, antes só linkava). Tipo de contrato, Localização, datas, condições de
+    operação, Dias de falta, Cursos e Habilidades **não** entram no escopo de edição do
+    `ADMIN`/`ANALISTA` — ficam sempre travados nessa tela.
+34. **"Adicionar Dias" virou uma ação própria**, separada de "Editar Contrato", em ambas as
+    visões (Cliente e Admin): só desbloqueia Dias de trabalho e Dias de folga. Dias de falta
+    continua exclusivo do fluxo de edição do Cliente (regra 31).
+35. **Só `ADMIN`/`ANALISTA` aprova o pagamento final e finaliza o contrato** — os botões
+    "Pagamento Final" (que aprova a NF e libera o pagamento, cobrando a taxa no mesmo evento,
+    PRD §4.7 estado 7) e "Finalizar Contrato" (PRD §4.7 estado 5, status final) existem só na
+    visão do `ADMIN`/`ANALISTA`.
+
+---
+
+## 15. Sessão 6 (17/09/2026) — "Adicionar Dias" virou extensão de prazo, não edição de dias
+
+36. **Revisão da regra 34.** "Adicionar Dias" não desbloqueia mais os campos "Dias de trabalho"
+    e "Dias de folga" para edição direta — abre um **modal** pedindo uma **nova Data de
+    Encerramento** e estende o contrato a partir dela. Dias de trabalho/folga voltam a ser
+    sempre somente leitura nas duas visões (Cliente e Admin). Motivo: estender o contrato é
+    definir até quando ele roda, não redigitar a lista de dias já registrados em `dia_contrato`.
+37. **Backend ainda não tem esse endpoint.** `POST /api/contratos/{uuid}/dias` entra no backlog
+    (`BACKEND_ANALISE.md` §6, junto com todas as outras ações do módulo de Contrato que hoje só
+    têm `TODO` no front).
+38. **Regras confirmadas (17/09/2026)** para quando o endpoint existir: (1) permitido em
+    qualquer contrato que não esteja **finalizado** (`Concluído`/`Pago`/`Cancelado`); (2) a nova
+    data **não altera** nenhum dia já registrado em `dia_contrato`; (3) **Diária** — o valor
+    total é recalculado **automaticamente**, porque já é campo derivado (quantidade de diárias ×
+    valor/dia — regra 13/§4.5): conforme novos dias de trabalho entrarem no período estendido, o
+    total sobe sozinho; (4) **Empreitada** — como o valor é fechado (não é derivado de dias), o
+    modal também pede um **valor adicional do período**, que o backend soma ao valor total
+    existente. O front só coleta os dois campos (nova data + valor adicional quando Empreitada)
+    e não faz nenhuma dessas contas — a implementação de verdade é do backend.

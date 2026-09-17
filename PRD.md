@@ -301,8 +301,8 @@ completar o próprio cadastro. **Não pode** publicar contrato, candidatar-se ne
 - [ ] **Descrição do serviço** — texto estruturado: o que o prestador deve fornecer ·
       tarefas e responsabilidades · proibições · regras de aceite e pagamento
 
-#### Visualização (`/client/contracts/{uuid}`)
-Tudo acima em leitura, **mais**:
+#### Visualização (`/contracts/{uuid}` — compartilhada entre Cliente e Prestador, ver `Figma.log` §13)
+Tudo acima em leitura, **mais** (visível só ao Cliente/`ADMIN`):
 - [ ] Percentual e **valor da taxa de serviço** (= valor total × taxa). O percentual é
       **congelado na publicação** conforme a faixa vigente do cliente (§2.2)
 - [ ] **Nota Fiscal emitida pelo prestador** (anexo) e **data de aprovação da NF**
@@ -333,6 +333,14 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 
 > A UI deve exibir os derivados como **somente leitura**, e a API deve **ignorar ou rejeitar**
 > esses campos no corpo da requisição — não basta desabilitar o input no front.
+
+> **Quem edita o quê em `/contracts/{uuid}`** (decidido em 17/09/2026, ver `Figma.log` §14):
+> ser um campo de entrada não significa que todo papel o edita ali. Na tela de visualização, o
+> Cliente só altera Descrição, Cursos exigidos, Habilidades desejadas e Dias de falta; o
+> `ADMIN`/`ANALISTA` só altera Status, Tipo de Serviço, o valor de entrada (por dia ou total) e
+> a Nota Fiscal. Tipo de contrato e Localização não são editáveis por ninguém depois de
+> publicado. Dias de trabalho/folga têm ação própria ("Adicionar Dias"), separada da edição
+> geral do contrato.
 
 ### 4.6 Mural de Oportunidades (`/provider/opportunities`)
 - [ ] Listagem de contratos abertos em cards (logo da empresa, ID, tipo, descrição)
@@ -425,7 +433,7 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 **Site institucional**: `/` (Home + About + Details) · `/business` (Empresas) · `/partners` (Prestadores MEI)
 
 **Aplicação**: `/login` · `/register/client` · `/register/provider` · `/client/contracts/new` ·
-`/client/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
+`/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
 `/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
 
 Breakpoints desenhados: **Desktop 1440px** e **Mobile 375px**.

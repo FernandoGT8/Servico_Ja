@@ -31,7 +31,7 @@ export default function AppRoutes() {
       {/* Área logada — exige apenas estar autenticado */}
       <Route element={<RequireAuth />}>
         <Route path="/client/contracts/new" element={<ContractNew />} />
-        <Route path="/client/contracts/:uuid" element={<ContractDetail />} />
+        <Route path="/contracts/:uuid" element={<ContractDetail />} />
         <Route path="/provider/opportunities" element={<ProviderOpportunities />} />
         <Route path="/client/profile/:uuid" element={<ClientProfile />} />
         <Route path="/client/profile/:uuid/billing" element={<ClientBilling />} />

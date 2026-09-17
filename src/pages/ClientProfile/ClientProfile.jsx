@@ -618,7 +618,7 @@ export default function ClientProfile() {
                           <td className="py-3 pr-4">{contrato.total}</td>
                           <td className="py-3">
                             <Link
-                              to={`/client/contracts/${contrato.id}`}
+                              to={`/contracts/${contrato.id}`}
                               className="font-semibold text-(--color-accent)"
                             >
                               Ver Contrato

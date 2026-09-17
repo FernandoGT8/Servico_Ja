@@ -205,3 +205,31 @@ base.
 Enquanto os dois repositórios tiverem specs divergentes, alguém vai codar pela versão errada.
 Decidir onde a documentação mora — repositório único, submódulo ou cópia sincronizada — antes
 de escrever mais código.
+
+---
+
+## 6. Backlog de endpoints — módulo de Contrato (17/09/2026)
+
+O front do módulo de Contrato (`ContractNew.jsx`, `ContractDetailAdmin.jsx`,
+`ContractDetailClient.jsx`, `ContractDetailProvider.jsx`) já está implementado e cada ação que
+depende do backend está marcada com `TODO` no código — nenhuma delas tem endpoint ainda. Lista
+completa, para não perder nenhuma na hora de implementar o núcleo do produto (item 7 da tabela
+da seção 4). Decisões de UI referenciadas estão em `Figma.log` §13–§15.
+
+| # | Ação (tela) | Endpoint proposto | Quem chama | Observações |
+|---|---|---|---|---|
+| 1 | Criar rascunho (`ContractNew`) | `POST /api/contratos` (`status: RASCUNHO`) | `CLIENTE` | Body: tipo, tipoServico, cidade, estado, datas, valor de entrada (por dia ou total), dias de trabalho/folga, operação (6 booleanos), cursos, habilidades, descrição estruturada (4 campos). API **calcula e ignora no request** o valor oposto, `quantidadeDiarias` e `percentualTaxa` (congelado pela faixa vigente do cliente, PRD §2.2) — regra 13. |
+| 2 | Publicar contrato (`ContractNew`) | mesmo endpoint, `status: AGUARDANDO_PRESTADORES` | `CLIENTE` | Mesmo body do #1; só muda o status de gravação. |
+| 3 | Buscar contrato (`ContractDetail*`, as 3 visões) | `GET /api/contratos/{uuid}` | `CLIENTE` dono · `PRESTADOR` (candidatou-se ou vendo o mural) · `ADMIN`/`ANALISTA` | **O backend deve filtrar a resposta por papel** — não mandar `percentualTaxa`/`valorTaxa`/`notaFiscal`/`candidaturas` para quem não é Cliente/Admin (hoje o front só não exibe; o certo é nem vir). |
+| 4 | Editar contrato — Cliente (`ContractDetailClient`) | `PUT/PATCH /api/contratos/{uuid}` | `CLIENTE` | Body só com o que esse papel edita: `descricao`, `cursosExigidos`, `habilidadesDesejadas`, `diasFalta`. API rejeita qualquer outro campo. |
+| 5 | Editar contrato — Admin (`ContractDetailAdmin`) | mesmo endpoint | `ADMIN`/`ANALISTA` | Body: `status` (um dos 8 estados do ciclo de vida, PRD §4.7 — **sem validação de transição no front**, o backend decide o que é permitido), `tipoServico`, o valor de entrada (por dia ou total), `notaFiscal` (upload). Toda edição de `ADMIN` gera `log_auditoria` (regra 14). |
+| 6 | Adicionar dias (`ContractDetailAdmin`/`ContractDetailClient`) | `POST /api/contratos/{uuid}/dias` | `CLIENTE` ou `ADMIN`/`ANALISTA` | Modal pede uma nova `dataEncerramento` e estende o contrato. **Regras confirmadas em 17/09/2026**: (1) permitido em qualquer status que não seja final (`Concluído`/`Pago`/`Cancelado` — front já desabilita o botão nesses casos, mas o backend deve validar de novo); (2) não altera nenhum `dia_contrato` já registrado; (3) **Diária**: `valor_total` é campo calculado, então atualiza sozinho conforme novos `dia_contrato` do tipo `TRABALHO` forem registrados no período estendido — nenhum recálculo manual aqui; (4) **Empreitada**: `valor_total` é fechado, então o body também carrega `valorAdicionalDias` (valor do período restante) que o backend **soma** ao `valor_total` existente. O front só captura os dois campos (`novaDataEncerramento`, `valorAdicionalDias` quando Empreitada) e não faz nenhuma dessas contas — fica tudo a cargo do backend. |
+| 7 | Candidatar-se (`ContractDetailProvider`) | `POST /api/contratos/{uuid}/candidaturas` | `PRESTADOR` | Exige status de acesso `Liberado` e contrato em `Aguardando Prestadores`. |
+| 8 | Selecionar prestador (`ContractDetailAdmin`/`ContractDetailClient`) | `POST /api/contratos/{uuid}/candidaturas/{candidaturaId}/selecionar` | `CLIENTE` ou `ADMIN`¹ | Ação financeira irreversível: reserva `RESERVA_SERVICO` + `RESERVA_TAXA` (regra 5/§2.1), exige saldo ≥ serviço + taxa, grava `Selecionado` + `Data de Seleção`. Em nome do Cliente por `ADMIN` exige `log_auditoria`. |
+| 9 | Pagamento final (`ContractDetailAdmin`) | `POST /api/contratos/{uuid}/pagamento-final` | `ADMIN`/`ANALISTA` | Aprova a NF, libera `LIBERACAO_PRESTADOR` e cobra `COBRANCA_TAXA` no mesmo evento (PRD §4.7 estado 7, regra 5). Front hoje só habilita o botão se houver arquivo de NF anexado — o backend deve validar de novo, não confiar só na UI. |
+| 10 | Finalizar contrato (`ContractDetailAdmin`) | `POST /api/contratos/{uuid}/finalizar` | `ADMIN`/`ANALISTA` | Fecha a execução, status final (PRD §4.7 estado 5). |
+| 11 | Catálogo de tipos de serviço | `GET /api/tipos-servico` | qualquer autenticado | Hoje é a constante local `TIPOS_SERVICO` em `src/data/catalogos.js`. Editável pelo `ADMIN` quando `/admin` (backlog) existir. |
+| 12 | Catálogo de cursos | `GET /api/cursos` | qualquer autenticado | Idem, constante `CURSOS` no mesmo arquivo. |
+
+¹ mesma observação de rodapé da matriz do `PRD.md` §3.6: ação de `ADMIN` em nome de terceiro
+exige registro em `log_auditoria`.
