@@ -50,9 +50,13 @@ precise sobreviver ao time vai para o `PRD.md` ou o `BACKEND_ANALISE.md`.
 ### Rotas (conforme Figma)
 Site: `/` · `/business` · `/partners`
 App: `/login` · `/register/client` · `/register/client/complete` · `/register/provider` ·
-`/register/provider/complete` · `/client/contracts/new` · `/contracts/{uuid}` ·
-`/provider/opportunities` · `/client/profile/{uuid}` · `/client/profile/{uuid}/billing` ·
-`/provider/profile/{uuid}` · `/admin` *(backlog)*
+`/register/provider/complete` · `/client/contracts/new` · `/contracts` · `/contracts/{uuid}` ·
+`/client/profile/{uuid}` · `/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` ·
+`/admin` *(backlog)*
+
+⚠️ **`/contracts` sem prefixo de papel** (decisão de 17/09/2026): listagem de contratos
+compartilhada entre os três papéis logados (dispatcher por papel, `pages/Contracts/`), mesmo
+raciocínio de `/contracts/{uuid}` abaixo. Substitui `/provider/opportunities`.
 
 ⚠️ **`/contracts/{uuid}` sem prefixo de papel** (decisão de 17/09/2026, ver `Figma.log` §13):
 a tela já era compartilhada entre Cliente e Prestador (o Figma desenha as duas visões), só a
@@ -127,16 +131,16 @@ migração em `Figma.log` §9):
   `ClientProfile*`, `ContractDetail*`, `ClientBilling*`, `ContractNew`, `Register*`,
   `FirstRegister*`...). `Login.jsx` é a única tela ainda em CSS puro colocado por página — não
   foi migrada.
-- **Padrão de dispatcher por papel**: `ClientProfile.jsx`, `ContractDetail.jsx` e
-  `ClientBilling.jsx` só decidem qual visão renderizar (`*Admin`/`*Client`/`*Provider`, conforme
-  `user.tipo`), com UI compartilhada em `*Fields.jsx`. Siga esse padrão para qualquer tela nova
-  que precise de 2+ visões por papel.
+- **Padrão de dispatcher por papel**: `ClientProfile.jsx`, `ContractDetail.jsx`,
+  `ClientBilling.jsx`, `Dashboard.jsx` e `Contracts.jsx` só decidem qual visão renderizar
+  (`*Admin`/`*Client`/`*Provider`, conforme `user.tipo`), com UI compartilhada em `*Fields.jsx`.
+  Siga esse padrão para qualquer tela nova que precise de 2+ visões por papel.
 - **Padrão de pasta por recurso**: telas que compartilham dado ou fluxo vivem juntas numa
   pasta só (`pages/ClientProfile/`, `pages/ContractDetail/`, `pages/ClientBilling/`,
-  `pages/Register/`, `pages/FirstRegister/`), com átomos de UI num `*Fields.jsx` + classes
-  Tailwind num `*fieldsUtils.js` (mesma convenção de `ContractFormFields.jsx`/
-  `contractFormUtils.js`) — nunca importados entre pastas diferentes, cada recurso é
-  autocontido.
+  `pages/Contracts/`, `pages/Register/`, `pages/FirstRegister/`), com átomos de UI num
+  `*Fields.jsx` + classes Tailwind num `*fieldsUtils.js` (mesma convenção de
+  `ContractFormFields.jsx`/`contractFormUtils.js`) — nunca importados entre pastas diferentes,
+  cada recurso é autocontido.
 - **Autenticação**: `AuthContext`/`useAuth` guardam `token` + `user` no `localStorage`;
   `authService.js` chama `POST /api/usuarios/{login,registrar}`. Em dev
   (`import.meta.env.DEV`), `login()` primeiro tenta um usuário fixo de `mockUsers.js` antes de

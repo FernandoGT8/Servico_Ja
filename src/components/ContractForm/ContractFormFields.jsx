@@ -2,10 +2,11 @@ import { useState } from "react";
 import { inputClassName, labelClassName, secondaryButtonClassName } from "./contractFormUtils";
 import { formatDateBR } from "./contractFormUtils";
 
-// Átomos de UI compartilhados entre ContractNew.jsx e ContractDetail.jsx —
-// as duas telas do mesmo recurso (contrato) usam exatamente os mesmos campos,
-// então extrair evita duas cópias divergindo (a mesma convenção de
-// ClientProfile.jsx/ClientBilling.jsx, só que agora com 2 páginas usando).
+// Átomos de UI compartilhados entre ContractNew.jsx, ContractDetail.jsx e
+// Contracts.jsx (listagem) — as três telas do mesmo recurso (contrato) usam
+// exatamente os mesmos campos, então extrair evita cópias divergindo (a
+// mesma convenção de ClientProfile.jsx/ClientBilling.jsx, só que agora com
+// 3 páginas usando).
 
 export function Section({ title, children }) {
   return (
@@ -95,8 +96,12 @@ export function SimNaoField({ label, value, onChange, disabled }) {
   );
 }
 
-export function ContractTypeToggle({ value, onChange, disabled }) {
+// `allowTodos` liga uma opção extra sem valor (usada como filtro em
+// Contracts.jsx) — ContractNew.jsx/ContractDetail.jsx continuam com as duas
+// opções originais, tipo de contrato é obrigatório nessas duas telas.
+export function ContractTypeToggle({ value, onChange, disabled, allowTodos = false }) {
   const opcoes = [
+    ...(allowTodos ? [{ valor: "", rotulo: "Todos" }] : []),
     { valor: "DIARIA", rotulo: "Diária" },
     { valor: "EMPREITADA", rotulo: "Empreitada" },
   ];
@@ -121,7 +126,14 @@ export function ContractTypeToggle({ value, onChange, disabled }) {
   );
 }
 
-export function DateListField({ label, dates, onAdd, onRemove, disabled }) {
+export function DateListField({
+  label,
+  dates,
+  onAdd,
+  onRemove,
+  disabled,
+  emptyMessage = "Nenhuma data adicionada.",
+}) {
   const [novaData, setNovaData] = useState("");
 
   function handleAdd() {
@@ -135,7 +147,7 @@ export function DateListField({ label, dates, onAdd, onRemove, disabled }) {
       <span className={labelClassName}>{label}</span>
       <div className={`${inputClassName} flex min-h-16 flex-wrap items-center gap-2`}>
         {dates.length === 0 && (
-          <span className="text-(--color-muted)">Nenhuma data adicionada.</span>
+          <span className="text-(--color-muted)">{emptyMessage}</span>
         )}
         {dates.map((data, index) => (
           <span

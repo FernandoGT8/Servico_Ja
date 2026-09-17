@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Calendar, Clock, ChevronRight } from "lucide-react";
 import { formatDataBR, formatHoraBR } from "./dashboardFieldsUtils";
 
@@ -82,18 +83,13 @@ export function ContractOverviewCard({ title, total, atualizadoEm, itens = [] })
         )}
       </div>
 
-      <button
-        type="button"
-        // TODO: nenhum papel tem hoje uma tela de listagem de contratos
-        // própria (Sidebar mantém "Contratos" como "Em breve" pra
-        // ADMIN/ANALISTA/CLIENTE — só o Prestador tem o mural) — liga aqui
-        // quando essa rota existir.
-        disabled
-        className="flex w-full items-center justify-between text-xs font-semibold text-(--color-accent) disabled:cursor-not-allowed disabled:opacity-40"
+      <Link
+        to="/contracts"
+        className="flex w-full items-center justify-between text-xs font-semibold text-(--color-accent)"
       >
         Ver mais
         <ChevronRight className="h-3 w-3" aria-hidden="true" />
-      </button>
+      </Link>
     </div>
   );
 }

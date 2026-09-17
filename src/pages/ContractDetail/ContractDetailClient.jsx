@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "@/services/api";
-import { CURSOS, STATUS_CONTRATO_FINALIZADOS } from "@/data/catalogos";
+import { CURSOS, HABILIDADES, STATUS_CONTRATO_FINALIZADOS } from "@/data/catalogos";
 import Modal from "@/components/Modal/Modal";
 import {
   Section,
@@ -79,17 +79,15 @@ export default function ContractDetailClient() {
   // Candidaturas do mural — vazio até existir GET /api/contratos/{uuid}/candidaturas.
   const [candidaturas, setCandidaturas] = useState([]);
 
-  const [descricao, setDescricao] = useState({
-    fornecimento: "",
-    tarefas: "",
-    proibicoes: "",
-    regrasAceitePagamento: "",
-  });
+  const [descricao, setDescricao] = useState("");
 
-  // Campos calculados (PRD §4.5) — sempre somente leitura. Simplificação:
-  // descontamos diasFalta do total na hora, mas na regra real (§4.8) a falta
-  // só desconta depois que o Prestador aprova a remoção — sem backend, não
-  // temos como saber se já foi aprovada.
+  // Campos calculados (PRD §4.5) — sempre somente leitura. "Dias de trabalho"
+  // também é calculado (intervalo Data de Início → Data de Encerramento,
+  // menos os Dias de folga) — o Cliente nunca edita essa lista, nem via
+  // "Editar Contrato". Simplificação: descontamos diasFalta do total na
+  // hora, mas na regra real (§4.8) a falta só desconta depois que o
+  // Prestador aprova a remoção — sem backend, não temos como saber se já
+  // foi aprovada.
   const quantidadeDiariasEfetivas = Math.max(diasTrabalho.length - diasFalta.length, 0);
   const valorTotalCalculado = useMemo(() => {
     if (tipoContrato !== "DIARIA") return null;
@@ -136,7 +134,7 @@ export default function ContractDetailClient() {
         setCursosExigidos(contrato.cursosExigidos ?? []);
         setHabilidadesDesejadas(contrato.habilidadesDesejadas ?? []);
         setCandidaturas(contrato.candidaturas ?? []);
-        if (contrato.descricao) setDescricao(contrato.descricao);
+        setDescricao(contrato.descricao ?? "");
       })
       .catch(() => {
         // Endpoint ainda não existe no backend — mantém os campos vazios.
@@ -256,6 +254,7 @@ export default function ContractDetailClient() {
                   onAdd={() => {}}
                   onRemove={() => {}}
                   disabled
+                  emptyMessage="Calculado pelo backend (Data de Início → Data de Encerramento, menos os Dias de folga)."
                 />
                 <DateListField
                   label="Dias de folga"
@@ -328,7 +327,8 @@ export default function ContractDetailClient() {
                   label="Habilidades desejadas"
                   values={habilidadesDesejadas}
                   onChange={setHabilidadesDesejadas}
-                  placeholder="Ex: Assentamento de piso..."
+                  sugestoes={HABILIDADES}
+                  permitirLivre={false}
                   disabled={!isEditing}
                 />
               </div>
@@ -408,53 +408,13 @@ export default function ContractDetailClient() {
 
             <Section title="Descrição do Serviço">
               <label className="flex flex-col gap-2">
-                <span className={labelClassName}>O que o prestador deve fornecer</span>
+                <span className={labelClassName}>Descrição completa do serviço</span>
                 <textarea
-                  value={descricao.fornecimento}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, fornecimento: event.target.value }))
-                  }
+                  value={descricao}
+                  onChange={(event) => setDescricao(event.target.value)}
+                  placeholder="O que o prestador deve fornecer, tarefas e responsabilidades, proibições, regras de aceite e pagamento..."
                   disabled={!isEditing}
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Tarefas e responsabilidades</span>
-                <textarea
-                  value={descricao.tarefas}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, tarefas: event.target.value }))
-                  }
-                  disabled={!isEditing}
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Proibições</span>
-                <textarea
-                  value={descricao.proibicoes}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, proibicoes: event.target.value }))
-                  }
-                  disabled={!isEditing}
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Regras de aceite e pagamento</span>
-                <textarea
-                  value={descricao.regrasAceitePagamento}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({
-                      ...atual,
-                      regrasAceitePagamento: event.target.value,
-                    }))
-                  }
-                  disabled={!isEditing}
-                  rows={3}
+                  rows={8}
                   className={`${inputClassName} resize-none`}
                 />
               </label>

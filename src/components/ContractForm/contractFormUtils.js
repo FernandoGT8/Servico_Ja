@@ -20,3 +20,27 @@ export function formatBRL(value) {
     value || 0,
   );
 }
+
+// "Dias de trabalho" é campo calculado (PRD §4.5): Data de Início → Data de
+// Encerramento, menos as datas em Dias de folga. Usado como preview ao vivo
+// na criação (ContractNew.jsx) — nas telas de detalhe o valor vem pronto do
+// backend, então não é recalculado lá.
+export function calcularDiasTrabalho(dataInicioISO, dataEncerramentoISO, diasFolga = []) {
+  if (!dataInicioISO || !dataEncerramentoISO) return [];
+  const inicio = dataInicioISO.slice(0, 10);
+  const fim = dataEncerramentoISO.slice(0, 10);
+  if (inicio > fim) return [];
+
+  const folgaSet = new Set(diasFolga);
+  const dias = [];
+  const cursor = new Date(`${inicio}T00:00:00`);
+  const dataFim = new Date(`${fim}T00:00:00`);
+
+  while (cursor <= dataFim) {
+    const isoDia = cursor.toISOString().slice(0, 10);
+    if (!folgaSet.has(isoDia)) dias.push(isoDia);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return dias;
+}

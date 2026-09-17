@@ -1,4 +1,5 @@
-import { User } from "lucide-react";
+import { useState } from "react";
+import { Eye, EyeOff, User } from "lucide-react";
 import { inputClassName, labelClassName } from "./firstRegisterFieldsUtils";
 
 // Átomos de UI compartilhados entre FirstRegisterClient.jsx e
@@ -44,11 +45,30 @@ export function TextField({ label, className = "", ...inputProps }) {
   );
 }
 
+// `hint` é texto estático por enquanto — quando o backend validar senha de
+// verdade (requisitos mínimos, confirmação), a mensagem passa a vir da
+// resposta da API em vez de ser fixa aqui (ver BACKEND_ANALISE.md §8).
 export function PasswordField({ label, hint, className = "", ...inputProps }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <label className={`flex flex-col gap-2 ${className}`}>
       <span className={labelClassName}>{label}</span>
-      <input {...inputProps} type="password" className={inputClassName} />
+      <div className="relative">
+        <input
+          {...inputProps}
+          type={showPassword ? "text" : "password"}
+          className={`${inputClassName} pr-11`}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+          className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
       {hint && (
         <small className="text-right text-xs text-slate-500">{hint}</small>
       )}

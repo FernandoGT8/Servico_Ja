@@ -346,10 +346,16 @@ editada manualmente, nem pelo `ADMIN` (regra 13/§4.5). Implementação fica a c
   - Pernoite em casa? · Pernoite em alojamento?
   - Transporte fornecido pela empresa? · Ferramentas fornecidas pela empresa?
   - EPI's fornecidos pela empresa? · Área de alimentação disponível?
-- [ ] **Cursos exigidos** (multi-seleção: NR-35, NR-20, Primeiros Socorros, …)
-- [ ] **Habilidades desejadas** (multi-seleção)
-- [ ] **Descrição do serviço** — texto estruturado: o que o prestador deve fornecer ·
-      tarefas e responsabilidades · proibições · regras de aceite e pagamento
+- [ ] **Cursos exigidos** (multi-seleção, catálogo do backend — ver nota abaixo)
+- [ ] **Habilidades desejadas** (multi-seleção, catálogo do backend — ver nota abaixo)
+- [ ] **Descrição do serviço** — um único campo de texto livre, cobrindo o que o prestador deve
+      fornecer, tarefas e responsabilidades, proibições e regras de aceite e pagamento (decidido
+      em 18/09/2026 — antes eram 4 campos separados; a UI simplificou para um só)
+
+> **Cursos e Habilidades são catálogos do backend** (decidido em 18/09/2026), no mesmo molde de
+> Tipo de Serviço: listas fechadas (`GET /api/cursos`, `GET /api/habilidades`), editáveis pelo
+> `ADMIN` numa futura página de configuração (matriz §3.6 — "Gerenciar catálogos"). Hoje são
+> constantes locais em `src/data/catalogos.js` até esses dois endpoints existirem.
 
 #### Visualização (`/contracts/{uuid}` — compartilhada entre Cliente e Prestador, ver `Figma.log` §13)
 Tudo acima em leitura, **mais** (visível só ao Cliente/`ADMIN`):
@@ -370,7 +376,7 @@ Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados
 |---|---|
 | `valor_total` *(Diária)* | nº de diárias × valor por dia |
 | `valor_dia` *(Empreitada)* | valor total ÷ dias do período |
-| quantidade de diárias / dias de trabalho | as datas registradas em `dia_contrato` |
+| quantidade de diárias / **dias de trabalho** | Data de Início → Data de Encerramento, **menos** as datas em Dias de folga (decidido em 18/09/2026) — grava em `dia_contrato` |
 | `percentual_taxa` | faixa vigente do cliente, congelada na publicação (§2.2) |
 | `valor_taxa` | `valor_total` × `percentual_taxa` |
 | dias agenciados do mês | agregação de `dia_contrato` (§2.2) |
@@ -379,7 +385,9 @@ Estes valores **nunca** são editáveis, nem pelo `ADMIN`. São sempre derivados
 
 **Campos de entrada** (editáveis conforme o papel e o estado): tipo de contrato, tipo de
 serviço, localização, datas, valor por dia *(Diária)* ou valor total *(Empreitada)*, dias de
-trabalho e folga, condições de operação, cursos, habilidades e descrição.
+folga, condições de operação, cursos, habilidades e descrição. **Dias de trabalho não está
+nesta lista** — é sempre derivado (ver tabela acima), mesmo que pareça uma lista de datas como
+Dias de folga.
 
 > A UI deve exibir os derivados como **somente leitura**, e a API deve **ignorar ou rejeitar**
 > esses campos no corpo da requisição — não basta desabilitar o input no front.
@@ -392,14 +400,25 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 > publicado. Dias de trabalho/folga têm ação própria ("Adicionar Dias"), separada da edição
 > geral do contrato.
 
-### 4.6 Mural de Oportunidades (`/provider/opportunities`)
-- [ ] Listagem de contratos abertos em cards (logo da empresa, ID, tipo, descrição)
-- [ ] Filtros: **tipo de contrato** (Diária/Empreitada) e **tipo de serviço**
-- [ ] Candidatura ao contrato
-- [ ] Campo **Promocode** → ⏸️ backlog (§8)
-- [ ] **Favoritar contrato** → ⏸️ backlog (§8) — o dashboard do Prestador (18/09/2026) já reserva
-      um card de "Contratos Favoritos", mas não há botão de favoritar no mural nem endpoint
-      ainda; entra junto quando essa tela ganhar o recurso
+### 4.6 Listagem de Contratos (`/contracts`) — três visões por papel
+
+Tela única, dispatcher por papel (mesmo raciocínio de `/contracts/{uuid}`, §4.5) — front em
+`pages/Contracts/` (`ContractsAdmin`/`ContractsClient`/`ContractsProvider`, UI compartilhada em
+`ContractsFields.jsx`). Substitui o antigo `/provider/opportunities` (decisão de 17/09/2026).
+
+- [ ] **ADMIN/ANALISTA**: todos os contratos da plataforma, sem escopo por cliente. Filtros:
+      **Status** e **Tipo de contrato** (Diária/Empreitada).
+- [ ] **CLIENTE**: só os próprios contratos (escopo por registro, §3.6). Filtros: **Status** e
+      **Tipo de contrato**. Atalho **"Novo Contrato"** para `/client/contracts/new`.
+- [ ] **PRESTADOR** *(era o "Mural de Oportunidades")*: só contratos em **Aguardando
+      Prestadores** — não é um filtro escolhido pelo usuário, é sempre esse status. Filtros:
+      **Tipo de contrato**, **Tipo de serviço** e **Cidade** (Cidade adicionada em 17/09/2026 —
+      o Figma já desenhava um campo de busca por cidade/ID que não estava neste filtro).
+      Candidatura ao contrato acontece na tela de detalhe (`/contracts/{uuid}`), não aqui.
+- [ ] Campo **Promocode** *(visão do Prestador)* → ⏸️ backlog (§8)
+- [ ] **Favoritar contrato** *(visão do Prestador)* → ⏸️ backlog (§8) — o dashboard do Prestador
+      (18/09/2026) já reserva um card de "Contratos Favoritos", mas não há botão de favoritar
+      nem endpoint ainda; entra junto quando essa tela ganhar o recurso
 
 ### 4.7 Ciclo de vida do contrato
 
@@ -489,9 +508,14 @@ trabalho e folga, condições de operação, cursos, habilidades e descrição.
 **Site institucional**: `/` (Home + About + Details) · `/business` (Empresas) · `/partners` (Prestadores MEI)
 
 **Aplicação**: `/login` · `/register/client` · `/register/client/complete` ·
-`/register/provider` · `/register/provider/complete` · `/client/contracts/new` ·
-`/contracts/{uuid}` · `/provider/opportunities` · `/client/profile/{uuid}` ·
-`/client/profile/{uuid}/billing` · `/provider/profile/{uuid}` · `/admin` *(backlog)*
+`/register/provider` · `/register/provider/complete` · `/client/contracts/new` · `/contracts` ·
+`/contracts/{uuid}` · `/client/profile/{uuid}` · `/client/profile/{uuid}/billing` ·
+`/provider/profile/{uuid}` · `/admin` *(backlog)*
+
+⚠️ **`/contracts` sem prefixo de papel** (decisão de 17/09/2026): a listagem de contratos é
+compartilhada entre ADMIN/ANALISTA, CLIENTE e PRESTADOR — dispatcher por papel, ver §4.6 —,
+mesmo raciocínio já usado em `/contracts/{uuid}`. Substitui `/provider/opportunities`, que era
+exclusiva do Prestador.
 
 ⚠️ **Cadastro em duas etapas** (decisão de 17/09/2026, ver `Figma.log` Sessão 11):
 `/register/client` e `/register/provider` só criam a conta (login) — campos simplificados.
@@ -595,6 +619,10 @@ O projeto será considerado **completo** quando:
       necessário agora que as partes se falam direto.
 
 ### Regras a definir
+- [ ] **Requisitos mínimos de senha** (tamanho, maiúscula/minúscula, número, caractere
+      especial?) — hoje o cadastro (`/register/client`, `/register/provider`) só exibe um aviso
+      estático ("requisitos mínimos") sem regra real por trás; a validação de senha coincidindo
+      é só local no front. Ver `@BACKEND_ANALISE.md` §8.
 - [ ] **Cancelamento**: em que estados é permitido? O que acontece com o crédito reservado?
 - [ ] **"Experiência prévia"** como requisito do prestador: o que valida? Quem aprova?
 - [ ] **Contestação de falta**: e se o prestador **não** aprovar a remoção do dia?

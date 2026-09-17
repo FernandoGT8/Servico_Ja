@@ -10,7 +10,7 @@ import RegisterClient from './pages/Register/RegisterClient'
 import RegisterProvider from './pages/Register/RegisterProvider'
 import ContractNew from './pages/ContractNew/ContractNew'
 import ContractDetail from './pages/ContractDetail/ContractDetail'
-import ProviderOpportunities from './pages/ProviderOpportunities/ProviderOpportunities'
+import Contracts from './pages/Contracts/Contracts'
 import ClientProfile from './pages/ClientProfile/ClientProfile'
 import ClientBilling from './pages/ClientBilling/ClientBilling'
 import ProviderProfile from './pages/ProviderProfile/ProviderProfile'
@@ -38,8 +38,11 @@ export default function AppRoutes() {
       {/* Área logada — exige apenas estar autenticado */}
       <Route element={<RequireAuth />}>
         <Route path="/client/contracts/new" element={<ContractNew />} />
+        {/* Listagem compartilhada entre os 3 papéis — dispatcher por papel,
+            mesmo raciocínio de /contracts/:uuid (Figma.log §13). Substitui
+            /provider/opportunities (decisão de 17/09/2026, PRD §4.6/§6.2). */}
+        <Route path="/contracts" element={<Contracts />} />
         <Route path="/contracts/:uuid" element={<ContractDetail />} />
-        <Route path="/provider/opportunities" element={<ProviderOpportunities />} />
         <Route path="/client/profile/:uuid" element={<ClientProfile />} />
         <Route path="/client/profile/:uuid/billing" element={<ClientBilling />} />
         <Route path="/provider/profile/:uuid" element={<ProviderProfile />} />

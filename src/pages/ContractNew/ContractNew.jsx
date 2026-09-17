@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCidadesPorEstado } from "@/services/ibgeService";
-import { TIPOS_SERVICO, CURSOS, ESTADOS_BR } from "@/data/catalogos";
+import { TIPOS_SERVICO, CURSOS, HABILIDADES, ESTADOS_BR } from "@/data/catalogos";
 import {
   Section,
   FormField,
@@ -17,6 +17,7 @@ import {
   primaryButtonClassName,
   secondaryButtonClassName,
   formatBRL,
+  calcularDiasTrabalho,
 } from "@/components/ContractForm/contractFormUtils";
 
 export default function ContractNew() {
@@ -71,7 +72,6 @@ export default function ContractNew() {
     valorTotal: "", // input do Cliente quando Empreitada
   });
 
-  const [diasTrabalho, setDiasTrabalho] = useState([]);
   const [diasFolga, setDiasFolga] = useState([]);
 
   const [operacao, setOperacao] = useState({
@@ -86,16 +86,17 @@ export default function ContractNew() {
   const [cursosExigidos, setCursosExigidos] = useState([]);
   const [habilidadesDesejadas, setHabilidadesDesejadas] = useState([]);
 
-  const [descricao, setDescricao] = useState({
-    fornecimento: "",
-    tarefas: "",
-    proibicoes: "",
-    regrasAceitePagamento: "",
-  });
+  const [descricao, setDescricao] = useState("");
 
-  // Campos calculados (PRD §4.5) — nunca editáveis diretamente. `quantidadeDiarias`
-  // vem das datas em "Dias de trabalho", não de um input numérico separado.
-  const quantidadeDiarias = diasTrabalho.length;
+  // Campos calculados (PRD §4.5) — nunca editáveis diretamente. "Dias de
+  // trabalho" é derivado de Data de Início → Data de Encerramento, menos
+  // Dias de folga (decidido em 18/09/2026) — não é mais uma lista que o
+  // Cliente povoa dia a dia.
+  const diasTrabalhoCalculados = useMemo(
+    () => calcularDiasTrabalho(financeiro.dataInicio, financeiro.dataEncerramento, diasFolga),
+    [financeiro.dataInicio, financeiro.dataEncerramento, diasFolga],
+  );
+  const quantidadeDiarias = diasTrabalhoCalculados.length;
   const valorTotalCalculado = useMemo(() => {
     if (tipoContrato !== "DIARIA") return null;
     return quantidadeDiarias * (Number(financeiro.valorPorDia) || 0);
@@ -106,12 +107,6 @@ export default function ContractNew() {
     return (Number(financeiro.valorTotal) || 0) / quantidadeDiarias;
   }, [tipoContrato, quantidadeDiarias, financeiro.valorTotal]);
 
-  function handleAddDiaTrabalho(data) {
-    setDiasTrabalho((atual) => (atual.includes(data) ? atual : [...atual, data].sort()));
-  }
-  function handleRemoveDiaTrabalho(index) {
-    setDiasTrabalho((atual) => atual.filter((_, i) => i !== index));
-  }
   function handleAddDiaFolga(data) {
     setDiasFolga((atual) => (atual.includes(data) ? atual : [...atual, data].sort()));
   }
@@ -275,9 +270,11 @@ export default function ContractNew() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <DateListField
                   label="Dias de trabalho"
-                  dates={diasTrabalho}
-                  onAdd={handleAddDiaTrabalho}
-                  onRemove={handleRemoveDiaTrabalho}
+                  dates={diasTrabalhoCalculados}
+                  onAdd={() => {}}
+                  onRemove={() => {}}
+                  disabled
+                  emptyMessage="Calculado automaticamente (Data de Início → Data de Encerramento, menos os Dias de folga)."
                 />
                 <DateListField
                   label="Dias de folga"
@@ -355,57 +352,20 @@ export default function ContractNew() {
                   label="Habilidades desejadas"
                   values={habilidadesDesejadas}
                   onChange={setHabilidadesDesejadas}
-                  placeholder="Ex: Assentamento de piso..."
+                  sugestoes={HABILIDADES}
+                  permitirLivre={false}
                 />
               </div>
             </Section>
 
             <Section title="Descrição do Serviço">
               <label className="flex flex-col gap-2">
-                <span className={labelClassName}>O que o prestador deve fornecer</span>
+                <span className={labelClassName}>Descrição completa do serviço</span>
                 <textarea
-                  value={descricao.fornecimento}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, fornecimento: event.target.value }))
-                  }
-                  placeholder="Ferramental, EPIs próprios, etc."
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Tarefas e responsabilidades</span>
-                <textarea
-                  value={descricao.tarefas}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, tarefas: event.target.value }))
-                  }
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Proibições</span>
-                <textarea
-                  value={descricao.proibicoes}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({ ...atual, proibicoes: event.target.value }))
-                  }
-                  rows={3}
-                  className={`${inputClassName} resize-none`}
-                />
-              </label>
-              <label className="flex flex-col gap-2">
-                <span className={labelClassName}>Regras de aceite e pagamento</span>
-                <textarea
-                  value={descricao.regrasAceitePagamento}
-                  onChange={(event) =>
-                    setDescricao((atual) => ({
-                      ...atual,
-                      regrasAceitePagamento: event.target.value,
-                    }))
-                  }
-                  rows={3}
+                  value={descricao}
+                  onChange={(event) => setDescricao(event.target.value)}
+                  placeholder="O que o prestador deve fornecer, tarefas e responsabilidades, proibições, regras de aceite e pagamento..."
+                  rows={8}
                   className={`${inputClassName} resize-none`}
                 />
               </label>

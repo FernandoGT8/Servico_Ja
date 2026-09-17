@@ -64,6 +64,27 @@ export const CURSOS = [
   "Primeiros Socorros",
 ];
 
+// Mesmo tratamento de TIPOS_SERVICO/CURSOS — catálogo local até o `/admin`
+// (backlog) ter uma página de configuração para o time editar (matriz PRD
+// §3.6 — "Gerenciar catálogos"). Trocar por GET /api/habilidades quando o
+// endpoint existir.
+export const HABILIDADES = [
+  "Assentamento de Piso e Azulejo",
+  "Alvenaria",
+  "Elétrica Predial",
+  "Hidráulica Predial",
+  "Pintura",
+  "Gesso e Drywall",
+  "Marcenaria",
+  "Soldagem",
+  "Montagem de Andaime",
+  "Impermeabilização",
+  "Operação de Máquinas Pesadas",
+  "Jardinagem e Paisagismo",
+  "Limpeza Pós-Obra",
+  "Instalação de Piso Laminado/Vinílico",
+];
+
 // Ciclo de vida do contrato (PRD §4.7) — usado no select de Status que só o
 // ADMIN/ANALISTA edita (ContractDetailAdmin.jsx). Sem validação de transição
 // aqui: o front deixa escolher qualquer estado, quem garante a regra de
