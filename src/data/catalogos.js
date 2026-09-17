@@ -96,3 +96,24 @@ export const STATUS_CONTRATO_FINALIZADOS = [
 // em 17/09/2026, ver Figma.log Sessão 7) — validação é do backend, o front só
 // deixa escolher o destino.
 export const STATUS_ACESSO = ["Pendente", "Liberado", "Bloqueado"];
+
+// Método preferencial de pagamento do Cliente (PRD §4.4), usado em
+// ClientBillingAdmin.jsx/ClientBillingClient.jsx. PIX entrou na Sessão 9 do
+// Figma.log — o Figma original só desenhava Boleto/Cartão.
+export const METODOS_PAGAMENTO = [
+  { value: "BOLETO", label: "Boleto" },
+  { value: "PIX", label: "PIX" },
+  { value: "CARTAO", label: "Cartão de Crédito" },
+];
+
+// Tipo do crédito bônus concedido pelo ADMIN sem cobrança (matriz §3.6,
+// "Conceder créditos bônus ao Cliente"), usado no modal de
+// ClientBillingAdmin.jsx (Figma.log Sessão 9). Alimenta `transacao_credito`
+// do lado da plataforma — não é o mesmo enum de `COMPRA`/`RESERVA_*` do PRD
+// §6.3, que é sempre pago pelo próprio Cliente.
+export const TIPOS_CREDITO_BONUS = [
+  { value: "BONUS", label: "Bônus" },
+  { value: "PROMOCIONAL", label: "Promocional" },
+  { value: "ESTORNO", label: "Estorno" },
+  { value: "OUTRO", label: "Outro" },
+];

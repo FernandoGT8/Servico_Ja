@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/useAuth";
 import { apiFetch } from "@/services/api";
 import { STATUS_ACESSO } from "@/data/catalogos";
 import Modal from "@/components/Modal/Modal";
+import CreditoBonusModal from "@/components/CreditoBonusModal/CreditoBonusModal";
 import {
   Section,
   FormField,
@@ -29,7 +30,9 @@ import {
 // calculado, PRD §4.5). "Verificar CNPJ" e "Alterar Status" (ex-"Liberar
 // Cadastro") são ações próprias do ADMIN e do ANALISTA, que têm essas duas
 // linhas marcadas na matriz. "Adicionar Créditos" (bônus, sem cobrança) é só
-// do ADMIN. A visão do Cliente é ClientProfileClient.jsx.
+// do ADMIN — usa o mesmo CreditoBonusModal de ClientBillingAdmin.jsx, já que
+// é a mesma ação de negócio disponível nas duas telas (Figma.log Sessão 10).
+// A visão do Cliente é ClientProfileClient.jsx.
 export default function ClientProfileAdmin() {
   const { uuid } = useParams();
   const { user } = useAuth();
@@ -40,7 +43,6 @@ export default function ClientProfileAdmin() {
   const [modalStatusAberto, setModalStatusAberto] = useState(false);
   const [statusSelecionado, setStatusSelecionado] = useState("Pendente");
   const [modalCreditosAberto, setModalCreditosAberto] = useState(false);
-  const [valorCreditoBonus, setValorCreditoBonus] = useState("");
 
   // Todo o estado abaixo nasce vazio — ainda não existe GET /api/clientes/{uuid}.
   const [conta, setConta] = useState({ email: "", cnpj: "" });
@@ -168,17 +170,16 @@ export default function ClientProfileAdmin() {
   }
 
   function handleAbrirModalCreditos() {
-    setValorCreditoBonus("");
     setModalCreditosAberto(true);
   }
 
-  function handleConfirmarCreditosBonus() {
+  function handleConfirmarCreditosBonus(_dadosCredito) {
     // TODO: integrar com POST /api/clientes/{uuid}/creditos/bonus quando
-    // existir — grava `transacao_credito` (tipo a definir, ex. `BONUS_ADMIN`)
-    // sem cobrança, distinto da compra paga em ClientBilling.jsx. Exclusivo
-    // do ADMIN (o botão já não aparece para ANALISTA) e entra em
-    // log_auditoria (regra 14).
-    setModalCreditosAberto(false);
+    // existir — _dadosCredito = { valor, tipo, descricao } (catálogo
+    // TIPOS_CREDITO_BONUS), vindo do CreditoBonusModal compartilhado. Grava
+    // `transacao_credito` sem cobrança, distinto da compra paga em
+    // ClientBilling.jsx. Exclusivo do ADMIN (o botão já não aparece para
+    // ANALISTA) e entra em log_auditoria (regra 14).
   }
 
   return (
@@ -603,42 +604,11 @@ export default function ClientProfileAdmin() {
           </div>
         </Modal>
 
-        <Modal
+        <CreditoBonusModal
           open={modalCreditosAberto}
           onClose={() => setModalCreditosAberto(false)}
-          title="Adicionar créditos bônus"
-        >
-          <p className="mb-4 text-sm text-(--color-muted)">
-            Crédito concedido pelo Serviços Já!, sem cobrança — distinto da compra paga pelo
-            próprio Cliente.
-          </p>
-          <label className="flex flex-col gap-2">
-            <span className={labelClassName}>Valor do bônus</span>
-            <input
-              type="number"
-              value={valorCreditoBonus}
-              onChange={(event) => setValorCreditoBonus(event.target.value)}
-              placeholder="R$ 0,00"
-              className={inputClassName}
-            />
-          </label>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setModalCreditosAberto(false)}
-              className={secondaryButtonClassName}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmarCreditosBonus}
-              className={primaryButtonClassName}
-            >
-              Confirmar
-            </button>
-          </div>
-        </Modal>
+          onConfirm={handleConfirmarCreditosBonus}
+        />
       </div>
     </div>
   );

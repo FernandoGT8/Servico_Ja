@@ -619,3 +619,60 @@ sentido inverso, que é o que esta sessão resolve.
     o *contrato*; esta é sobre o *Cliente* como empresa (nome, responsável, contato, bio) — dado
     que persiste entre vários contratos do mesmo Cliente, não faz sentido duplicá-lo por
     contrato. Por isso ficou em `ClientProfile.jsx`, não em `ContractDetail.jsx`.
+
+---
+
+## 18. Sessão 9 (17/09/2026) — `/client/profile/{uuid}/billing` ganha visão de ADMIN/ANALISTA
+
+`ClientBilling.jsx` virou um dispatcher por papel, mesmo padrão de `ClientProfile.jsx` e
+`ContractDetail.jsx` (§13–17): `ClientBillingAdmin.jsx` (visão de `ADMIN`/`ANALISTA`) e
+`ClientBillingClient.jsx` (visão do próprio `CLIENTE`), com átomos de UI compartilhados em
+`ClientBillingFields.jsx`. Motivo: o mockup novo desta sessão desenha as três variantes (Admin
+Desktop, Admin Mobile, Cliente) da mesma tela — antes só existia a versão do Cliente.
+
+49. **`PRD.md` §4.4 ("Painel de Créditos — exclusivo do Cliente") não é violado.** A frase descreve
+    que só o papel `CLIENTE` tem um painel financeiro próprio (o `PRESTADOR` não tem nenhum,
+    regra 9) — não que a rota seja inacessível ao time interno. A matriz §3.6 já dava ao `ADMIN`
+    "Comprar créditos" e "Conceder créditos bônus ao Cliente" ✅¹, sem apontar onde; esta sessão
+    só decide que é aqui. `ANALISTA` continua sem nenhuma ação de crédito na matriz — cai na
+    visão de `ADMIN` (mesmo motivo de `ContractDetailAdmin.jsx`/`ClientProfileAdmin.jsx`: acesso
+    total do `ADMIN` cobre o `ANALISTA` por ora), mas sem os botões de ação, só leitura.
+50. **Financeiro: o que cada papel edita.** Créditos Atuais, Acesso ao Sistema, Data da última
+    compra são sempre travados (campos calculados, PRD §4.5). Razão Social e CNPJ vêm da
+    Documentação e nunca são editados manualmente, nem pelo `ADMIN` (regra 13) — por isso só
+    aparecem na visão de `ADMIN`/`ANALISTA` (o Cliente já os vê em `/client/profile/{uuid}`, não
+    precisa duplicar aqui). ~~Inferência original: "Editar" > "Salvar" desbloqueava Email para
+    comprovante e Telefone para o `ADMIN`~~ — **revisto na Sessão 10** (ver regra 54).
+51. **PIX entrou como terceira opção** de Método de Pagamento (Boleto/PIX/Cartão) — o Figma
+    original só desenhava Boleto/Cartão. Catálogo `METODOS_PAGAMENTO` em `catalogos.js`.
+52. ~~Modal de crédito bônus ficou mais rico aqui do que em `ClientProfileAdmin.jsx`, duplicação
+    não resolvida~~ — **resolvido na Sessão 10** (ver regra 55).
+53. **"Menu de Ações" do mockup mobile do Admin não virou um componente separado.** O código não
+    tem telas mobile próprias (nenhuma outra página do projeto tem) — os botões do rodapé usam o
+    mesmo `flex flex-wrap` responsivo de `ContractDetailAdmin.jsx`/`ClientProfileAdmin.jsx` nas
+    duas larguras, sem um menu colapsável dedicado.
+
+---
+
+## 19. Sessão 10 (17/09/2026) — Confirma edição do Admin e unifica o modal de crédito bônus
+
+Duas correções do Luiz às inferências da Sessão 9:
+
+54. **"Editar" > "Salvar" do `ADMIN` em `ClientBillingAdmin.jsx` desbloqueia só o Método
+    Preferencial de pagamento** — não Email para comprovante/Telefone como a regra 50 havia
+    inferido. Créditos Atuais, Acesso ao Sistema, Razão Social, CNPJ, Email para comprovante,
+    Telefone e Data da última compra **sempre vêm do backend, somente leitura**, mesmo com a tela
+    em modo de edição. Alinhado com a Seção "Financeiro: vem do Back end" da ação original — sem
+    exceção para o `ADMIN` (diferente do `CLIENTE`, que tem a exceção explícita do método de
+    pagamento).
+55. **O modal de crédito bônus virou componente compartilhado**: `CreditoBonusModal.jsx` (novo,
+    em `src/components/CreditoBonusModal/`), com os três campos da Sessão 9 (Valor, Tipo de
+    crédito, Descrição opcional). `ClientProfileAdmin.jsx` e `ClientBillingAdmin.jsx` usam a
+    mesma instância — a ação "Conceder créditos bônus ao Cliente" (matriz §3.6) é uma só, não faz
+    sentido ter dois formulários divergentes para ela. Resolve a duplicação apontada na regra 44
+    e na regra 52 (revista).
+56. **Convenção nova**: `eslint.config.js` ganhou `argsIgnorePattern: '^_'` em `no-unused-vars` —
+    necessário porque `handleConfirmarCreditosBonus` nas duas telas ainda é só `TODO` (endpoint
+    de bônus não existe no backend) mas já recebe o payload `{ valor, tipo, descricao }` do
+    `CreditoBonusModal` via callback; o parâmetro fica `_dadosCredito` até a integração real
+    usá-lo. Vale para qualquer outro handler-TODO nessa mesma situação daqui pra frente.
