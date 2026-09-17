@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/useAuth";
 import { getHomeRoute } from "@/utils/roleRoutes";
 import { RegisterLayout, TextField, SelectField, SimNaoField } from "./RegisterFields";
 import { primaryButtonClassName, secondaryButtonClassName } from "./registerFieldsUtils";
@@ -39,7 +38,6 @@ const MOTIVOS_CADASTRO = ["Reduzir custos", "Aumentar produtividade", "Melhorar 
 // (segmento, cargo, empresa, CNPJ); depois disso o cadastro segue Pendente
 // até a validação de CNPJ e liberação pelo ADMIN/ANALISTA (PRD §3.5).
 export default function RegisterClient() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -74,7 +72,7 @@ export default function RegisterClient() {
   function handleCompleteProfile() {
     // TODO: endpoint de completar perfil do Cliente ainda não existe no
     // backend (ver BACKEND_ANALISE.md §8). Por ora só segue para a Home do papel.
-    navigate(getHomeRoute(user?.tipo, user?.uuid));
+    navigate(getHomeRoute());
   }
 
   return (

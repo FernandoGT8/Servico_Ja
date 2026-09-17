@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   LayoutDashboard,
@@ -92,7 +92,6 @@ function BottomBarLink({ label, to, icon: Icon }) {
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
-  const { uuid } = useParams();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -118,7 +117,7 @@ export default function Sidebar() {
           : []),
       ]
     : [
-        { label: "Home", to: getHomeRoute(user?.tipo, uuid), icon: Home },
+        { label: "Home", to: getHomeRoute(), icon: Home },
         {
           label: "Contratos",
           to: getContractsTarget(user?.tipo),
@@ -131,7 +130,7 @@ export default function Sidebar() {
     {
       label:
         !isInternal && user?.tipo === "PRESTADOR" ? "Meu Perfil" : "Minha Conta",
-      to: isInternal ? null : getProfileRoute(user?.tipo, uuid),
+      to: isInternal ? null : getProfileRoute(user?.tipo, user?.uuid),
       icon: User,
     },
   ];

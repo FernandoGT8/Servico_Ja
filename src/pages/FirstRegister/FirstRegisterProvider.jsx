@@ -73,23 +73,23 @@ export default function FirstRegisterProvider() {
         onSubmit={handleSubmit}
       >
         <TextField
-          label="Nome"
+          label="Nome Completo"
           placeholder="Digite seu nome e sobrenome"
           value={formData.nome}
           onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
         />
 
         <TextField
-          label="Telefone"
+          label="Seu telefone"
           placeholder="(DDD) 99999-9999"
           value={formData.telefone}
           onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
         />
 
         <TextField
-          label="Email"
+          label="Seu e-mail"
           type="email"
-          placeholder="Email corporativo"
+          placeholder="MeuEmail@email.com.br"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />

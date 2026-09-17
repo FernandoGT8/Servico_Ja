@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/useAuth";
 import { getHomeRoute } from "@/utils/roleRoutes";
 import { getCidadesPorEstado } from "@/services/ibgeService";
 import { ESTADOS_BR } from "@/data/catalogos";
@@ -37,7 +36,6 @@ const MOTIVOS_CADASTRO = ["Aumentar renda", "Reduzir custos", "Expandir negócio
 // (CPF, CNPJ/MEI, habilidades...); depois disso o cadastro segue Pendente
 // até a validação de CNPJ/documentos e liberação pelo ADMIN/ANALISTA (PRD §3.5).
 export default function RegisterProvider() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -106,7 +104,7 @@ export default function RegisterProvider() {
   function handleCompleteProfile() {
     // TODO: endpoint de completar perfil do Prestador ainda não existe no
     // backend (ver BACKEND_ANALISE.md §8). Por ora só segue para a Home do papel.
-    navigate(getHomeRoute(user?.tipo, user?.uuid));
+    navigate(getHomeRoute());
   }
 
   return (

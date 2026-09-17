@@ -4,9 +4,10 @@ import DashboardClient from "./DashboardClient";
 import DashboardProvider from "./DashboardProvider";
 
 // /dashboard é a landing pós-login de todo papel (Login.jsx redireciona
-// todo mundo pra cá — getHomeRoute só desvia CLIENTE/PRESTADOR quando eles
-// já têm uuid). Este componente só decide qual visão renderizar, mesmo
-// padrão de dispatcher de ClientProfile.jsx/ContractDetail.jsx.
+// todo mundo pra cá, e getHomeRoute() — usado pela Sidebar e pela segunda
+// etapa do cadastro — aponta pra mesma rota). Este componente só decide
+// qual visão renderizar, mesmo padrão de dispatcher de
+// ClientProfile.jsx/ContractDetail.jsx.
 export default function Dashboard() {
   const { user } = useAuth();
 

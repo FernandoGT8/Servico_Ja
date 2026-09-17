@@ -16,6 +16,8 @@ import ClientBilling from './pages/ClientBilling/ClientBilling'
 import ProviderProfile from './pages/ProviderProfile/ProviderProfile'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Admin from './pages/Admin/Admin'
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
+import NotFoundRedirect from './components/NotFoundRedirect/NotFoundRedirect'
 
 export default function AppRoutes() {
   return (
@@ -27,6 +29,8 @@ export default function AppRoutes() {
 
       {/* Autenticação — público */}
       <Route path="/login" element={<Login />} />
+      {/* Backlog (PRD §4.1) — sem frame no Figma ainda */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       {/* Primeira etapa do cadastro: só cria a conta (login) — Figma.log Sessão 11 */}
       <Route path="/register/client" element={<FirstRegisterClient />} />
       <Route path="/register/provider" element={<FirstRegisterProvider />} />
@@ -51,15 +55,19 @@ export default function AppRoutes() {
         <Route path="/register/provider/complete" element={<RegisterProvider />} />
       </Route>
 
-      {/* Landing pós-login de todos os papéis — dashAdmin/dashClient/dashProvider
-          (dispatcher por papel, mesmo padrão de ClientProfile) chegam numa
-          próxima seção; hoje é a mesma tela genérica para os 4 papéis. */}
+      {/* Landing pós-login de todos os papéis — Dashboard.jsx é o dispatcher
+          por papel (DashboardAdmin/Client/Provider), mesmo padrão de
+          ClientProfile/ContractDetail/ClientBilling. */}
       <Route element={<RequireAuth />}>
         <Route path="/dashboard" element={<Dashboard />} />
       </Route>
 
       {/* Backlog — sem frame no Figma, sem gate de role definido ainda */}
       <Route path="/admin" element={<Admin />} />
+
+      {/* Nenhuma rota acima bateu: manda pra Home (deslogado) ou Dashboard
+          (logado) em vez de deixar a tela em branco. */}
+      <Route path="*" element={<NotFoundRedirect />} />
     </Routes>
   )
 }

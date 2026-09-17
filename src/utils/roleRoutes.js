@@ -1,14 +1,10 @@
-// Para onde cada papel vai por padrão — usado tanto pelo redirecionamento
-// pós-login (Login.jsx) quanto pelo item "Home"/"Minha Conta" da Sidebar.
-// Fica num só lugar para os dois não divergirem.
-
-// Alguns papéis ainda não têm uma rota própria (ex.: painel do Cliente).
-// Nesses casos cai em "/" em vez de inventar um destino.
-export function getHomeRoute(tipo, uuid) {
-  if (tipo === 'ADMIN' || tipo === 'ANALISTA') return '/dashboard'
-  if (tipo === 'CLIENTE') return uuid ? `/client/profile/${uuid}` : '/'
-  if (tipo === 'PRESTADOR') return '/provider/opportunities'
-  return '/'
+// Landing pós-login de todo papel — usada tanto pelo redirecionamento do
+// Login.jsx quanto pelo item "Home"/"Dashboard" da Sidebar, num só lugar
+// pra não divergirem. Desde que /dashboard virou um dispatcher com view
+// própria pra ADMIN/ANALISTA/CLIENTE/PRESTADOR, é a mesma rota pra todos —
+// não depende mais de uuid.
+export function getHomeRoute() {
+  return '/dashboard'
 }
 
 // `null` quando o papel não tem uma tela de perfil própria ainda (ou não há
